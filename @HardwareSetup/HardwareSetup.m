@@ -1,70 +1,142 @@
 classdef HardwareSetup < Singleton
     %HARDWARESETUP Summary of this class goes here
-    %   Detailed explanation goes here
+    %   To grab the unique instance, call HardwareSetup.instance();
+    %
+    % The intention is that the class will automatically clean up hardware
+    % when there are no (outside) references to the instance remaining.
+    % However:
+    % TODO does the persistent singleInstance reference here count as a
+    % cyclic one?? Text from documentation:
+    %
+    % MATLAB will automatically clean up when the last reference
+    % to its handle falls out of scope.  (MATLAB ignores the cyclic
+    % reference.)
+    %
+    %  Consider a set of objects that reference other objects of the set such
+    %  that the references form a cyclic graph. In this case, MATLAB:
+    %
+    %   Destroys the objects if they are referenced only within the cycle.
+    %   Does not destroy the objects as long as there is an external
+    %   reference to any of the objects from a MATLAB variable outside the
+    %   cycle
     
     properties
-        HW
+        room
+        screenNum
+        
+        viewDist
+        monWidth
+        
+        useStereoscope
+        stereoMode
+        stereoTexWidth
+        stereoTexOffset
+        
+        initPause
+        
+        lumCalib
+        lumChannelContrib
+        usePTBPerPxCorrection
+        
+        upKey
+        downKey
+        leftKey
+        rightKey
+        haltKey
+        validKeys
+        
+        rightSound % filename
+        wrongSound
+        failSound
+        rightSoundHandle % to PsychPortAudio
+        wrongSoundHandle
+        failSoundHandle
+        
+        randSeed
+        randStream
+        
+        defaultFigureRect
+        
+        initialized
+        
+        white % TODO Dependent?
+        fps % TODO Dependent?
+        
+        winPtr
+        screenRect
+        
+        realWinPtr
+        realRect
+        % TODO realWinPtr should be Private, and winPtr should be Dependent
+        % and same for realRect and screenRect
     end
     
-    methods(Access=private) % Ensure control over creation of these objects
-        function self = HardwareSetup()
-            [~, ~, self.HW] = Parameters();
-            InitializeHardware(self.HW);
-        end
+    properties(Dependent)
+        ppd
+    end
+    
+    % Caching for faster LumToColor
+    % TODO should be cleared on changes to
+    %     HW.lumChannelContrib and/or HW.lumCalib
+    properties(Access=private)
+        stealPP
+        nearestLumPP
+        finalStepSizePP
+        lumToRawPP
+        rawToLumPP
+    end
+    
+    % For ScreenCustomStereo
+    properties(Access=private)
+        texturePtrs
+        textureRects
+        currentStereoBuffer
     end
     
     methods(Static)
         function obj = instance()
-            persistent uniqueInstance
-            if isempty(uniqueInstance)
+            persistent singleInstance
+            if isempty(singleInstance) || ~isvalid(singleInstance)
                 obj = HardwareSetup();
-                uniqueInstance = obj;
+                singleInstance = obj;
             else
-                obj = uniqueInstance;
+                obj = singleInstance;
             end
         end
     end
     
+    methods(Access=private) % Ensure control over creation of these objects
+        function self = HardwareSetup()
+            % Projector ('1424'), plasma ('1424plasma'), or stereoscope
+            % ('1402chatnoir'), etc.
+            self.room = '1424plasma';
+            self.screenNum = 2; % see Screen('Screens?')
+            
+            DefaultParameters(self);
+            Initialize(self);
+        end
+    end
+    
+    methods
+        function ppd = get.ppd(HW)
+            radtodeg = @(rad) rad*180/pi;
+            
+            monWidthPx = HW.screenRect(3)-HW.screenRect(1);
+            monWidthDeg = radtodeg(2*atan(HW.monWidth/HW.viewDist/2));
+            
+            ppd = monWidthPx / monWidthDeg;
+        end
+        
+%         function ppd = set.ppd(HW)
+%             error
+%         end
+    end
+    
     methods
         function delete(self)
-            CleanupHardware(self.HW);
+            Cleanup(self);
         end
     end
     
 end
 
-% Based on "Design Pattern: Singleton (Creational)", by B. Nedelkovski
-%  http://www.mathworks.com/matlabcentral/fileexchange/24911
-%  The MathWorks Australia Pty Ltd
-%  Copyright 2009, The MathWorks, Inc.
-%
-% Used under BSD license:
-%{
-Copyright (c) 2009, The MathWorks, Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without 
-modification, are permitted provided that the following conditions are 
-met:
-
-* Redistributions of source code must retain the above copyright 
-  notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright 
-  notice, this list of conditions and the following disclaimer in 
-  the documentation and/or other materials provided with the distribution
-* Neither the name of the The MathWorks, Inc. nor the names 
-  of its contributors may be used to endorse or promote products derived 
-  from this software without specific prior written permission.
-      
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-%}
