@@ -21,8 +21,10 @@ classdef HardwareSetup < Singleton
     %   cycle
     
     properties
-        room
-        screenNum
+        % Projector ('1424'), plasma ('1424plasma'), or stereoscope
+        % ('1402chatnoir'), etc.
+        room = '1424plasma';
+        screenNum = 0; % see Screen('Screens?')
         
         viewDist
         monWidth
@@ -73,6 +75,8 @@ classdef HardwareSetup < Singleton
     
     properties(Dependent)
         ppd
+        width
+        height
     end
     
     % Caching for faster LumToColor
@@ -107,11 +111,6 @@ classdef HardwareSetup < Singleton
     
     methods(Access=private) % Ensure control over creation of these objects
         function self = HardwareSetup()
-            % Projector ('1424'), plasma ('1424plasma'), or stereoscope
-            % ('1402chatnoir'), etc.
-            self.room = '1424plasma';
-            self.screenNum = 2; % see Screen('Screens?')
-            
             DefaultParameters(self);
             Initialize(self);
         end
@@ -125,6 +124,14 @@ classdef HardwareSetup < Singleton
             monWidthDeg = radtodeg(2*atan(HW.monWidth/HW.viewDist/2));
             
             ppd = monWidthPx / monWidthDeg;
+        end
+        
+        function width = get.width(HW)
+            width = HW.screenRect(3)-HW.screenRect(1);
+        end
+        
+        function height = get.height(HW)
+            height = HW.screenRect(4)-HW.screenRect(2);
         end
         
 %         function ppd = set.ppd(HW)
