@@ -1,4 +1,4 @@
-function [ HW, varargout ] = ScreenCustomStereo( HW, screenFunc, varargin )
+function [ varargout ] = ScreenCustomStereo( HW, screenFunc, varargin )
 %SCREENCUSTOMSTEREO Abstraction wrapper for stereoscopes
 %   Replacements for the following Screen functions:
 %     'OpenWindow'
@@ -118,9 +118,9 @@ if strcmpi(screenFunc, 'OpenWindow')
     PsychColorCorrection('SetLookupTable', HW.realWinPtr, table); 
     Screen('BlendFunction', HW.realWinPtr, ...
             GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    width = (HW.realRect(3)-HW.realRect(1));
+    scrWidth = (HW.realRect(3)-HW.realRect(1));
     % Process parameters
-    if ~isfield(HW, 'stereoTexWidth') || isempty(HW.stereoTexWidth)
+    if ~(isfield(HW, 'stereoTexWidth') || isprop(HW, 'stereoTexWidth') ) || isempty(HW.stereoTexWidth)
         HW.stereoTexWidth = Inf; % full screen
     end
     assert(isscalar(HW.stereoTexWidth), 'SCS:BadParameter', ...
@@ -128,9 +128,9 @@ if strcmpi(screenFunc, 'OpenWindow')
     assert(HW.stereoTexWidth >= 0, 'SCS:BadParameter',...
         'HW.stereoTexWidth should not be negative!');
     if all(HW.stereoTexWidth <= 1)
-        HW.stereoTexWidth = width*HW.stereoTexWidth;
+        HW.stereoTexWidth = scrWidth*HW.stereoTexWidth;
     elseif all(isinf(HW.stereoTexWidth))
-        HW.stereoTexWidth = width;
+        HW.stereoTexWidth = scrWidth;
     end
     if ~isfield(HW, 'stereoTexOffset') || isempty(HW.stereoTexOffset)
         if HW.stereoMode == 0
@@ -140,7 +140,7 @@ if strcmpi(screenFunc, 'OpenWindow')
         end
     end
     if all(abs(HW.stereoTexOffset) <= 1)
-        HW.stereoTexOffset = width*HW.stereoTexOffset;
+        HW.stereoTexOffset = scrWidth*HW.stereoTexOffset;
     end
     % Construct textures
     HW.texturePtrs = cell(1,2);
@@ -192,7 +192,7 @@ elseif strcmpi(screenFunc, 'SelectStereoDrawBuffer')
                 HW.winPtr = HW.texturePtrs{HW.currentStereoBuffer};
             end
         end
-        varargout = HW.currentStereoBuffer-1;
+        varargout = {HW.currentStereoBuffer-1};
     else
         % Doesn't seem to be related to us
         varargout{:} = Screen(screenFunc, varargin{:});

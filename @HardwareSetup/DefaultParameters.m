@@ -186,7 +186,7 @@ function [ ] = DefaultParameters(HW)
     HW.failSound = importdata('media/Windows Hardware Fail.wav');
     
     % Store random number generator
-    HW.randSeed = now();
+    HW.randSeed = now()*24*60;
     HW.randStream = RandStream('mt19937ar', 'Seed', HW.randSeed);
     
     % Default window position and size for MATLAB plots and figures

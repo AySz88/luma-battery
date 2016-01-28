@@ -23,7 +23,7 @@ classdef HardwareSetup < Singleton
     properties
         % Projector ('1424'), plasma ('1424plasma'), or stereoscope
         % ('1402chatnoir'), etc.
-        room = '1424plasma';
+        room = 'asdf';
         screenNum = 0; % see Screen('Screens?')
         
         viewDist
