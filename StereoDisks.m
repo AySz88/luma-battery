@@ -9,7 +9,7 @@ classdef StereoDisks < Task
         BGLuminanceSD = 0.20;
         nDisks = 8;
         DiskLuminance = 0.0;
-        DiskOffFromCenterDeg = 3.0;
+        DiskOffFromCenterDeg = 3.0; % How far center of each disk is from the center of the screen
         DiskSizeDeg = 1.125; % diameter
         DiskPosJitterDeg = 1.0; % total horizontal variation (half left, half right)
     end
@@ -94,8 +94,8 @@ classdef StereoDisks < Task
             hw.ScreenCustomStereo('Flip', hw.winPtr);
             
             % FIXME - FOR TESTING ONLY! remove me!
-            pause();
-            delete(hw);
+%             pause();
+%             delete(hw);
         end
         
         % Returns whether the task(s) have been completed
