@@ -2,7 +2,14 @@ function [ ] = DefaultParameters(HW)
 %DEFAULTPARAMETERS Loads hardware information into the HW object.
 %   These include: user interface, OpenGL, and OS & MATLAB environment, etc
 %   See inline comments for details.
-%   HW: Hardware parameter structure
+%
+%   TODO identify "rooms" by their computer hostnames
+
+    % Projector ('1424'), plasma ('1424plasma'), or stereoscope
+    % ('1402chatnoir'), etc.
+    HW.room = GetHostname();
+    %HW.screenNum = 2; % see Screen('Screens?')
+    HW.screenNum = length(Screen('Screens'))-1;
     
     % HW.monWidth: width of entire viewable screen (cm)
     %   (Will later be multiplied by the fraction used, if stereoscope)

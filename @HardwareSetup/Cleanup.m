@@ -24,7 +24,9 @@ function [ ] = Cleanup( HW )
     Screen('CloseAll');
     ListenChar(0);
     
-    PsychPortAudio('Close');
+    try PsychPortAudio('Close'); catch, end;
+    
+    ShowCursor();
     
     HW.initialized = false;
 end

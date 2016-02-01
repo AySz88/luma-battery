@@ -1,4 +1,4 @@
-classdef HardwareSetup < Singleton
+classdef HardwareSetup < handle
     %HARDWARESETUP Summary of this class goes here
     %   To grab the unique instance, call HardwareSetup.instance();
     %
@@ -21,10 +21,8 @@ classdef HardwareSetup < Singleton
     %   cycle
     
     properties
-        % Projector ('1424'), plasma ('1424plasma'), or stereoscope
-        % ('1402chatnoir'), etc.
-        room = 'asdf';
-        screenNum = 0; % see Screen('Screens?')
+        room
+        screenNum
         
         viewDist
         monWidth
@@ -97,7 +95,7 @@ classdef HardwareSetup < Singleton
         currentStereoBuffer
     end
     
-    methods(Static)
+    methods(Static, Access={?HWReference})
         function obj = instance()
             persistent singleInstance
             if isempty(singleInstance) || ~isvalid(singleInstance)

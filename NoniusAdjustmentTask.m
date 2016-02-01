@@ -30,8 +30,9 @@ classdef NoniusAdjustmentTask < Task
             %   Adapted to object-oriented framework 2016-01-30 by Alex
             %       classdef NoniusAdjustmentTask < Task
 
-            HW = HardwareSetup.instance();
-
+            HWRef = HWReference();
+            HW = HWRef.hw;
+            
             bias = zeros(1,self.nAdj*2);
             posInit = zeros(1,self.nAdj*2);
             posResp = zeros(1,self.nAdj*2);
@@ -117,7 +118,7 @@ classdef NoniusAdjustmentTask < Task
                         Screen('FrameRect',HW.winPtr, P.rightLuminance*[1 1 1], RectPositions, RectPens);
                         Screen('DrawLines',HW.winPtr, LinePositionsR, self.innerFuseTargetThickness, P.rightLuminance*[1 1 1], [], 1);
 
-                        HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, P.lockSquares);
+                        %HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, P.lockSquares);
                         HW = ScreenCustomStereo(HW, 'Flip', HW.winPtr);
 
                         [keyIsDown, ~, keyCode] = KbCheck;

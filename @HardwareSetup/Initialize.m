@@ -71,6 +71,10 @@ function [ ] = Initialize( HW )
         
         % Tell MATLAB to not read keystrokes into command window
         ListenChar(2);
+        
+        % Hide the mouse cursor (screenNum only matters for Linux)
+        % Usually hides mouse no matter what screen it's on
+        HideCursor(HW.screenNum);
 
         % Initialize audio players
         InitializePsychSound;

@@ -31,7 +31,7 @@ classdef DataFile < handle
         function df = DataFile(path, columns)
             % Check inputs
             if isempty(path)
-                path = defaultPath();
+                path = DataFile.defaultPath();
             end
             
             if exist(path, 'file')
