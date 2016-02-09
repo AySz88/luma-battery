@@ -11,10 +11,19 @@ classdef NoniusAdjustmentTask < Task
         fuseTargetBiasMax = 0.166;          % deviation max of the correct aligned position of the lines from the center in degrees
         fuseTargetJitterMax = 0.166;        % deviation max of the lines at the begining of a trial from the correct position
         adjustmentStep = 0.1;               % step of the adjustment lines in pixels
+        
+        background = 0.25;
+        leftLuminance = 0.75;
+        rightLuminance = 0.75;
+        
+        %DrawFusionLock parameters:
+        %lockWidthDeg
+        %lockSquares
     end
 
     methods
         function [success, result] = runOnce(self)
+            % History (oldest at top):
             %   Originally by Baptiste Caziot SUNYOpt 10/2010
             %       Usage: [posInit var] = NoniusAdjustmentTask(E,R,window);
             %           posInit: random positions of the lines at the begining of the
@@ -26,7 +35,7 @@ classdef NoniusAdjustmentTask < Task
             %           window: pointer to window presenting stimuli
             %   Adapted to RDK framework 2013-07-15 by Alex
             %       function [HW, angDisp, fixDisp, bias, posInit, posResp, respTime] = NoniusAdjustmentTask(HW, P, AdjP)
-            %       NoniusAdjustmentTask.m  Runs an adjustment task(s) with nonius lines, AdjP.nAdj times in a row.
+            %       NoniusAdjustmentTask.m  Runs an adjustment task(s) with nonius lines, Adjself.nAdj times in a row.
             %   Adapted to object-oriented framework 2016-01-30 by Alex
             %       classdef NoniusAdjustmentTask < Task
 
@@ -39,7 +48,7 @@ classdef NoniusAdjustmentTask < Task
             respTime = zeros(1,self.nAdj*2);
 
             center = 0.5 .* (HW.screenRect([3 4]) - HW.screenRect([1 2]));
-            lockWidthPx = P.lockWidthDeg * HW.ppd;
+%             lockWidthPx = self.lockWidthDeg * HW.ppd;
 
             monWidthPx = HW.screenRect(3) - HW.screenRect(1);
             pixelsPerCM = monWidthPx/HW.monWidth;
@@ -107,19 +116,21 @@ classdef NoniusAdjustmentTask < Task
                         end
 
                         % Left eye
-                        HW = ScreenCustomStereo(HW, 'SelectStereoDrawBuffer', HW.winPtr, 0);
-                        Screen('FillRect', HW.winPtr, P.background);
-                        Screen('FrameRect',HW.winPtr, P.leftLuminance*[1 1 1], RectPositions, RectPens);
-                        Screen('DrawLines',HW.winPtr, LinePositionsL, self.innerFuseTargetThickness, P.leftLuminance*[1 1 1], [], 1);
+                        HW.ScreenCustomStereo('SelectStereoDrawBuffer', HW.winPtr, 0);
+                        Screen('FillRect', HW.winPtr, self.background);
+                        leftLumRaw = HW.white * self.leftLuminance * [1 1 1];
+                        Screen('FrameRect',HW.winPtr, leftLumRaw, RectPositions, RectPens);
+                        Screen('DrawLines',HW.winPtr, LinePositionsL, self.innerFuseTargetThickness, leftLumRaw, [], 1);
 
                         % Right eye
-                        HW = ScreenCustomStereo(HW, 'SelectStereoDrawBuffer', HW.winPtr, 1);
-                        Screen('FillRect', HW.winPtr, P.background);
-                        Screen('FrameRect',HW.winPtr, P.rightLuminance*[1 1 1], RectPositions, RectPens);
-                        Screen('DrawLines',HW.winPtr, LinePositionsR, self.innerFuseTargetThickness, P.rightLuminance*[1 1 1], [], 1);
+                        HW.ScreenCustomStereo('SelectStereoDrawBuffer', HW.winPtr, 1);
+                        Screen('FillRect', HW.winPtr, self.background);
+                        rightLumRaw = HW.white * self.rightLuminance * [1 1 1];
+                        Screen('FrameRect',HW.winPtr, rightLumRaw, RectPositions, RectPens);
+                        Screen('DrawLines',HW.winPtr, LinePositionsR, self.innerFuseTargetThickness, rightLumRaw, [], 1);
 
-                        %HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, P.lockSquares);
-                        HW = ScreenCustomStereo(HW, 'Flip', HW.winPtr);
+                        %HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, self.lockSquares);
+                        HW.ScreenCustomStereo('Flip', HW.winPtr);
 
                         [keyIsDown, ~, keyCode] = KbCheck;
                         if keyIsDown
@@ -146,15 +157,15 @@ classdef NoniusAdjustmentTask < Task
                     respTime(idx) = GetSecs() - timeStart;
                 end
             end
-            fixDisp = posInit + posResp
-            angDisp = 2.0 ./ HW.ppd .* fixDisp
+            fixDisp = posInit + posResp;
+            angDisp = 2.0 ./ HW.ppd .* fixDisp;
+            
+            fprintf('Fixation Disparity %f | Angular disparity %f', ...
+                fixDisp, angDisp);
 
+            self.Completed = true;
             success = true;
             result = [angDisp, fixDisp, bias, posInit, posResp, respTime];
-        end
-        
-        % Returns whether the task(s) have been completed
-        function value = completed(task)
         end
         
         % Returns: a cell array of each result object, in the order they
