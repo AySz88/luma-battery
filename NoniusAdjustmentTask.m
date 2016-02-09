@@ -160,10 +160,12 @@ classdef NoniusAdjustmentTask < Task
             fixDisp = posInit + posResp;
             angDisp = 2.0 ./ HW.ppd .* fixDisp;
             
-            fprintf('Fixation Disparity %f | Angular disparity %f', ...
-                fixDisp, angDisp);
+            for i = 1:length(fixDisp)
+                fprintf('Fixation Disparity: %+6.2f px (%+5.2f°)\n', ...
+                    fixDisp(i), angDisp(i));
+            end
 
-            self.Completed = true;
+            self.runOnce@Task();
             success = true;
             result = [angDisp, fixDisp, bias, posInit, posResp, respTime];
         end

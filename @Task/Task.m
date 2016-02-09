@@ -7,7 +7,7 @@ classdef (Abstract) Task < handle
         OutFile
     end
     
-    properties (Access = private)
+    properties (Access = protected)
         Completed = false;
     end
     

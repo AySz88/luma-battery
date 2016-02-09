@@ -132,7 +132,7 @@ classdef StereoDisks < Task
                 if mouseDist > mouseMaxPx
                     %mouseDist = mouseMaxPx;
                     mouseVec = [cos(mouseTheta), sin(mouseTheta)] * mouseMaxPx;
-                    mouseVecOnScreen = mouseVec + scrCenter;
+                    mouseVecOnScreen = round(mouseVec + scrCenter);
                     SetMouse(mouseVecOnScreen(1), mouseVecOnScreen(2), mousePtr);
                 end
                 
