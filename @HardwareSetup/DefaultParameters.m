@@ -194,6 +194,7 @@ function [ ] = DefaultParameters(HW)
     
     % Store random number generator
     HW.randSeed = now()*24*60;
+    HW.randSeed = mod(now()*24*60*60, 2^31);
     HW.randStream = RandStream('mt19937ar', 'Seed', HW.randSeed);
     
     % Default window position and size for MATLAB plots and figures

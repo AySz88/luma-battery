@@ -1,8 +1,16 @@
 classdef StereoDisks < Task
+    properties (Constant)
+        CROSS_VS_UNCROSS = 1;
+        ZERO_VS_CROSS = 2;
+    end
     properties%(Access=private)
         DisparityDeg
         
-        DurationSec = 0.200;
+        PreStimSec = 0.1;
+        
+        DurationSec = 0.5;
+        
+        DelaySec = 0.1; % between stimulus and response UI
         
         BGCheckSizeAM = 30.0; % size of squares in arcmin
         BGLuminanceAvg = 0.75;
@@ -10,12 +18,19 @@ classdef StereoDisks < Task
         nDisks = 8;
         DiskLuminance = 0.0;
         DiskOffFromCenterDeg = 3.0; % How far center of each disk is from the center of the screen
-        DiskSizeDeg = 1.125; % diameter
+        DiskSizeDeg = 1.0; % diameter
         DiskPosJitterDeg = 1.0; % total horizontal variation (half left, half right)
         DiskColor = 0;
         DotType = 1; % Screen(DrawDots) dot type argument
         
-        MouseMaxWanderDeg = 1.0; % max distance the mouse can wander from the 
+        DisparityType = StereoDisks.ZERO_VS_CROSS;
+        DisparityDirection = 'x';
+        
+        DiskResponseSizeDeg = 0.75;
+        DiskResponseOutlineSizeDeg = 0.9;
+        DiskResponseOutlineColor = 1.0;
+        
+        MouseMaxWanderDeg = 3.0; % max distance the mouse can wander from the 
         MouseDotLum = [1 0 0];
         MouseLineSizePx = 3;
         MouseDotSizePx = 15;
@@ -68,10 +83,16 @@ classdef StereoDisks < Task
             
             idealCenters = [cos(angles); sin(angles)] * diskOffsetsPx;
             diskCenters = idealCenters + [jitterOffsets; zeros(1, self.nDisks)];
-
-            disparityOffsetPx = 0.5 * self.DisparityDeg * ppd;
-            disparityOffsets = ones(1,self.nDisks) * disparityOffsetPx;
-            disparityOffsets(reversedDisk) = disparityOffsets(reversedDisk) * -1;
+            
+            if self.DisparityType == self.CROSS_VS_UNCROSS
+                disparityOffsetPx = 0.5 * self.DisparityDeg * ppd;
+                disparityOffsets = ones(1,self.nDisks) * disparityOffsetPx;
+                disparityOffsets(reversedDisk) = disparityOffsets(reversedDisk) * -1;
+            elseif self.DisparityType == self.ZERO_VS_CROSS
+                disparityOffsetPx = self.DisparityDeg * ppd;
+                disparityOffsets = zeros(1,self.nDisks) * disparityOffsetPx;
+                disparityOffsets(reversedDisk) = disparityOffsetPx;
+            end
             
             diskSizePx = self.DiskSizeDeg * ppd;
             
@@ -92,11 +113,18 @@ classdef StereoDisks < Task
 
                     % Calculate dot positions for this eye including offsets
                     currEyeCenters = diskCenters;
-                    currEyeCenters(1,:) = currEyeCenters(1,:) + ...
+                    switch lower(self.DisparityDirection)
+                        case 'x'
+                            offsetRowIdx = 1;
+                        case 'y'
+                            offsetRowIdx = 2;
+                    end
+                    currEyeCenters(offsetRowIdx,:) = ...
+                        currEyeCenters(offsetRowIdx,:) + ...
                         disparityMult * disparityOffsets;
 
                     Screen('DrawDots', hw.winPtr, ...
-                        currEyeCenters, diskSizePx, self.DiskColor, ...
+                        currEyeCenters, diskSizePx, self.DiskColor * hw.white, ...
                         scrCenter, self.DotType);
 
                     % For debugging
@@ -114,12 +142,32 @@ classdef StereoDisks < Task
                 end
             end
             
+            % Brief pause between stimulus and response UI
+            delayStart = GetSecs();
+            delayComplete = false;
+            while ~delayComplete;
+                for i=0:1
+                    % i=0 for left eye, i=1 for right eye
+                    hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
+                    Screen('DrawTexture', hw.winPtr, self.BGTexture, ...
+                        [], bgDestRect, [], 0);
+                end
+                hw.ScreenCustomStereo('Flip', hw.winPtr);
+                
+                if GetSecs() - delayStart > self.DelaySec
+                    delayComplete = true;
+                end
+            end
+            
             % Set cursor to (near) the center
             mousePtr = hw.screenNum;
-            scrCtrX = scrCenter(1);
-            scrCtrY = scrCenter(2);
+            scrCtrX = round(scrCenter(1));
+            scrCtrY = round(scrCenter(2));
             SetMouse(scrCtrX, scrCtrY, mousePtr);
             mouseMaxPx = self.MouseMaxWanderDeg * ppd;
+            
+            diskResponseSizePx = self.DiskResponseSizeDeg * ppd;
+            diskResponseOutlineSizePx = self.DiskResponseOutlineSizeDeg * ppd;
             
             trialComplete = false;
             while ~trialComplete
@@ -146,12 +194,18 @@ classdef StereoDisks < Task
                         [], bgDestRect, [], 0);
                     
                     Screen('DrawDots', hw.winPtr, ...
-                        idealCenters, diskSizePx, self.DiskColor, ...
+                        idealCenters, diskResponseOutlineSizePx, ...
+                        self.DiskResponseOutlineColor * hw.white, ...
+                        scrCenter, self.DotType);
+                    
+                    Screen('DrawDots', hw.winPtr, ...
+                        idealCenters, diskResponseSizePx, ...
+                        self.DiskColor * hw.white, ...
                         scrCenter, self.DotType);
                     
                     % Draw over the active disk with the highlight color
                     Screen('DrawDots', hw.winPtr, ...
-                        idealCenters(:, activeDisk), diskSizePx, ...
+                        idealCenters(:, activeDisk), diskResponseSizePx, ...
                         self.ActiveDiskLum * hw.white, scrCenter, self.DotType);
                     
                     % Draw the mouse location
@@ -172,6 +226,12 @@ classdef StereoDisks < Task
             end
             
             correct = (activeDisk == reversedDisk);
+            
+            if correct
+                PsychPortAudio('Start', hw.rightSoundHandle);
+            else
+                PsychPortAudio('Start', hw.wrongSoundHandle);
+            end
             
             success = true;
             result = [reversedDisk, activeDisk, correct];

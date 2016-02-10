@@ -16,6 +16,8 @@ classdef NoniusAdjustmentTask < Task
         leftLuminance = 0.75;
         rightLuminance = 0.75;
         
+        mouseMovementMult = 0.5; % How much lines should move per pixel of mouse movement
+        
         %DrawFusionLock parameters:
         %lockWidthDeg
         %lockSquares
@@ -99,11 +101,25 @@ classdef NoniusAdjustmentTask < Task
                         L4_y1 = fuseTargetInner_R(4) - fuseLineLengthPx;
                         L4_y2 = fuseTargetInner_R(4);
                     end
-
-                    while KbCheck; end % wait until no key pressed
+                    
+                    % wait until all keys and mouse buttons are released
+                    waiting = true;
+                    while waiting
+                        [~, ~, buttons] = GetMouse();
+                        waiting = KbCheck || any(buttons);
+                    end
+                    
                     shift = 0;
                     timeStart = GetSecs();
-
+                    
+                    % Set cursor to (near) the center
+                    mousePtr = HW.screenNum;
+                    scrCenter = round(0.5*[HW.width HW.height]);
+                    scrCtrX = scrCenter(1);
+                    scrCtrY = scrCenter(2);
+                    SetMouse(scrCtrX, scrCtrY, mousePtr);
+                    
+                    % Animation / UI loop
                     while 1
                         if oo==1
                             changePos = [0 0 ; shift shift];
@@ -131,26 +147,39 @@ classdef NoniusAdjustmentTask < Task
 
                         %HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, self.lockSquares);
                         HW.ScreenCustomStereo('Flip', HW.winPtr);
-
+                        
+                        % parse inputs
                         [keyIsDown, ~, keyCode] = KbCheck;
                         if keyIsDown
                             K = find(keyCode==1,1);
                             if K==KbName('return')
                                 break
-                            elseif oo==1 
+                            elseif oo==1 % vertical changes
                                 if K==KbName('2')
                                     shift = shift-self.adjustmentStep;
                                 elseif K==KbName('8')
                                     shift = shift+self.adjustmentStep;
                                 end
-                            elseif oo==2
-                               if K==KbName('4')
+                            elseif oo==2 % horizontal changes
+                                if K==KbName('4')
                                     shift = shift-self.adjustmentStep;
-                               elseif K==KbName('6')
+                                elseif K==KbName('6')
                                     shift = shift+self.adjustmentStep;
-                               end
+                                end
                             end
                         end
+                        
+                        % Look for displacement in mouse, then reset it
+                        [mouseX, mouseY, buttons] = GetMouse(mousePtr);
+                        mouseVec = [mouseX - scrCtrX, mouseY - scrCtrY];
+                        if buttons(1)==1
+                            break
+                        elseif oo==1 % vertical changes
+                            shift = shift + mouseVec(2)*self.mouseMovementMult;
+                        elseif oo==2 % horizontal changes
+                            shift = shift + mouseVec(1)*self.mouseMovementMult;
+                        end
+                        SetMouse(scrCtrX, scrCtrY, mousePtr);
                     end
 
                     posResp(idx) = shift;
