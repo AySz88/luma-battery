@@ -64,6 +64,15 @@ classdef Group < Task
             value = isempty(group.tasksToDo);
         end
         
+        function [success, result] = runAll(group)
+            allResults = [];
+            while ~group.completed
+                [s, r] = group.runOnce();
+            end
+            success = true;
+            result = allResults;
+        end
+        
         function [success, result] = runOnce(group)
             currentTask = group.selectNextTask();
             

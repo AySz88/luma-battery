@@ -2,6 +2,7 @@ classdef StereoDisks < Task
     properties (Constant)
         CROSS_VS_UNCROSS = 1;
         ZERO_VS_CROSS = 2;
+        %VERTICAL_VS_CROSS = 3;
     end
     properties%(Access=private)
         DisparityDeg
@@ -16,14 +17,15 @@ classdef StereoDisks < Task
         BGLuminanceAvg = 0.75;
         BGLuminanceSD = 0.20;
         nDisks = 8;
+        StartDotTheta = 2 * pi * 0.125;
         DiskLuminance = 0.0;
         DiskOffFromCenterDeg = 3.0; % How far center of each disk is from the center of the screen
         DiskSizeDeg = 1.0; % diameter
-        DiskPosJitterDeg = 1.0; % total horizontal variation (half left, half right)
+        DiskPosJitterDeg = 0.25; % total horizontal variation (half left, half right)
         DiskColor = 0;
         DotType = 1; % Screen(DrawDots) dot type argument
         
-        DisparityType = StereoDisks.ZERO_VS_CROSS;
+        DisparityType = StereoDisks.CROSS_VS_UNCROSS;
         DisparityDirection = 'x';
         
         DiskResponseSizeDeg = 0.75;
@@ -36,11 +38,17 @@ classdef StereoDisks < Task
         MouseDotSizePx = 15;
         MouseLineType = 2;
         ActiveDiskLum = [0.3 0 0];
+        
+        AnnulusLum = 0.5;
+        AnnulusInnerRDeg = 2.0;
+        AnnulusOuterRDeg = 3.0;
     end
     
     properties(Access=private)
         BGTexture
         BGTextureSize
+        AnnuTexture
+        AnnuTextureSize
     end
     
     methods
@@ -71,11 +79,14 @@ classdef StereoDisks < Task
             
             self.BGTexture = hw.ScreenCustomStereo('MakeTexture', hw.winPtr, bgImg);
             
+            % Build annulus texture
+%             self.BGTexture = hw.ScreenCustomStereo('MakeTexture', hw.winPtr, bgImg);
+            
             % Calculate positions of disks and objects
             reversedDisk = randi(self.nDisks);
             
             scrCenter = 0.5*[hw.width hw.height];
-            angles = (0:self.nDisks-1) * 2*pi/self.nDisks;
+            angles = (0:self.nDisks-1) * 2*pi/self.nDisks + self.StartDotTheta;
             diskOffsetsPx = self.DiskOffFromCenterDeg * ppd;
                 
             posJitterPx = self.DiskPosJitterDeg * ppd;
@@ -95,6 +106,29 @@ classdef StereoDisks < Task
             end
             
             diskSizePx = self.DiskSizeDeg * ppd;
+            annulusOuterSizePx = self.AnnulusOuterRDeg * hw.ppd;
+            
+            annulusColor = self.AnnulusLum * hw.white;
+            
+            delayStart = GetSecs();
+            delayComplete = false;
+            while ~delayComplete;
+                for i=0:1
+                    % i=0 for left eye, i=1 for right eye
+                    hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
+                    Screen('DrawTexture', hw.winPtr, self.BGTexture, ...
+                        [], bgDestRect, [], 0);
+                    
+                    Screen('gluDisk', hw.winPtr, annulusColor, ...
+                        scrCenter(1), scrCenter(2), annulusOuterSizePx);
+                end
+                hw.ScreenCustomStereo('Flip', hw.winPtr);
+                
+                if GetSecs() - delayStart > self.PreStimSec
+                    delayComplete = true;
+                end
+            end
+            
             
             stimulusStart = GetSecs();
             displayComplete = false;
@@ -104,6 +138,9 @@ classdef StereoDisks < Task
                     hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
                     Screen('DrawTexture', hw.winPtr, self.BGTexture, ...
                         [], bgDestRect, [], 0);
+                    
+                    Screen('gluDisk', hw.winPtr, annulusColor, ...
+                        scrCenter(1), scrCenter(2), annulusOuterSizePx);
 
                     if i == 0
                         disparityMult = -1;
@@ -151,6 +188,9 @@ classdef StereoDisks < Task
                     hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
                     Screen('DrawTexture', hw.winPtr, self.BGTexture, ...
                         [], bgDestRect, [], 0);
+                    
+                    Screen('gluDisk', hw.winPtr, annulusColor, ...
+                        scrCenter(1), scrCenter(2), annulusOuterSizePx);
                 end
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
@@ -184,7 +224,7 @@ classdef StereoDisks < Task
                     SetMouse(mouseVecOnScreen(1), mouseVecOnScreen(2), mousePtr);
                 end
                 
-                activeDisk = mod(round(mouseTheta/(2*pi) * self.nDisks)+1, self.nDisks);
+                activeDisk = mod(round((mouseTheta-self.StartDotTheta)/(2*pi) * self.nDisks)+1, self.nDisks);
                 if activeDisk == 0, activeDisk = self.nDisks; end
                 
                 for i=0:1
@@ -192,6 +232,9 @@ classdef StereoDisks < Task
                     hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
                     Screen('DrawTexture', hw.winPtr, self.BGTexture, ...
                         [], bgDestRect, [], 0);
+                    
+                    Screen('gluDisk', hw.winPtr, annulusColor, ...
+                        scrCenter(1), scrCenter(2), annulusOuterSizePx);
                     
                     Screen('DrawDots', hw.winPtr, ...
                         idealCenters, diskResponseOutlineSizePx, ...
