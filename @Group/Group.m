@@ -23,9 +23,9 @@ classdef Group < Task
     %   this happens, you will observe a "stack overflow" error (I think?).
     
     properties (GetAccess = private, SetAccess = private)
-        tasksToDo
-        tasksDone
-        results
+        tasksToDo = []
+        tasksDone = []
+        results = []
     end
     
     methods (Access = protected)
@@ -46,7 +46,7 @@ classdef Group < Task
                     'The object must implement Task.');
                 throw(e);
             end
-            if find(group.tasksToDo, t)
+            if find(group.tasksToDo == t, 1)
                 e = MException('Group.addChoice:alreadyExists', ...
                     ['A handle to the same Task object should not be' ...
                     ' added twice to the same Group.  If you want to' ...
@@ -64,13 +64,17 @@ classdef Group < Task
             value = isempty(group.tasksToDo);
         end
         
-        function [success, result] = runAll(group)
-            allResults = [];
+        function [success, allResults] = runAll(group)
             while ~group.completed
                 [s, r] = group.runOnce();
+                group.results = {group.results r};
+                if ~s
+                    success = false;
+                    return;
+                end
             end
             success = true;
-            result = allResults;
+            allResults = group.results;
         end
         
         function [success, result] = runOnce(group)

@@ -1,4 +1,4 @@
-classdef (Abstract) Task < handle
+classdef (Abstract) Task < matlab.mixin.Copyable
     %TASK Interface for anything that can run an atomic action (ex. trial)
     %   Subclasses of this class can run different types of trials and
     %   stimuli, different mixes of trials, in different order, etc.
