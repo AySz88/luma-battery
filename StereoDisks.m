@@ -16,10 +16,10 @@ classdef StereoDisks < Task
         BGCheckSizeAM = 30.0; % size of squares in arcmin
         BGLuminanceAvg = 0.75;
         BGLuminanceSD = 0.20;
-        nDisks = 8;
+        nDisks = 4;
         StartDotTheta = 2 * pi * 0.125;
         DiskLuminance = 0.0;
-        DiskOffFromCenterDeg = 3.0; % How far center of each disk is from the center of the screen
+        DiskOffFromCenterDeg = 1.5; % How far center of each disk is from the center of the screen
         DiskSizeDeg = 1.0; % diameter
         DiskPosJitterDeg = 0.25; % total horizontal variation (half left, half right)
         DiskColor = 0;
