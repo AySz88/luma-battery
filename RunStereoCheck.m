@@ -1,17 +1,86 @@
+%% Ensure environment is as expected
+% TODO put this into HardwareSetup?
 
-disparitiesDeg = 10 .^ (-0.6:0.2:1.0) / 60.0; % 0.25 to 10 arcmin
-% disparitiesDeg = repmat(10 .^ (1.0:-0.2:-0.6) / 60.0, 1, 10); % 0.25 to 10 arcmin
+if ~exist('Screen', 'file')
+    fprintf('No PTB installed!');
+end
+PTBInfo = Screen('Version');
+PTBCompInfo = Screen('Computer');
+fprintf('=== PTB/Matlab Environment Information ===\n');
+fprintf('%s %s\n', PTBInfo.date, PTBInfo.time);
+fprintf('Running PTB project %s\n', PTBInfo.project);
+fprintf('Running PTB version %s\n', PTBInfo.version);
+fprintf('Operating system: %s : %s\n', PTBInfo.os, PTBCompInfo.system);
+fprintf('PTB support level is: %s\n', PTBCompInfo.supported);
+fprintf('M-file interpreter: %s\n', PTBInfo.language);
+fprintf('\n');
+    
+try
+    [ hasChanges, output ] = GitChangeCheck( );
 
+    if hasChanges
+        contConfirmed = false;
+        fprintf('===== Git repository status output =====\n');
+        fprintf('%s\n\n', output);
+        
+        while ~contConfirmed
+            contStr = input(['Untracked code changes detected! \n'...
+                'Details above. This may indicate that temporary or\n' ...
+                ' test changes have been accidentally left in this\n'...
+                ' copy of the code.\n'...
+                ' Continue anyway? '], 's');
+            switch contStr
+                case {'n', 'no'}
+                    return % stop script!
+                case {'y', 'yes'}
+                    contConfirmed = true;
+                otherwise
+                    fprintf('**Huh? Try ''y'' or ''n''...\n');
+            end
+        end
+    end
+catch e
+    switch e.identifier
+        case 'GitChangeCheck:gitNotInstalled'
+            warning(['Could not verify with git that code has ' ...
+                ' not been changed from expected!']);
+            fprintf(['Please make sure any temporary changes have'...
+                ' been removed.  Press Ctrl-C to stop, or any other key'...
+                ' to continue...\n']);
+            pause();
+        otherwise
+            rethrow(e)
+    end
+end
+
+%% Define the experiment's trials
+mainExperiment = Group();
+
+% One demo trial first
+demoTrial = StereoDisks();
+StereoDisks.DurationSec = Inf;
+mainExperiment.addChoice(demoTrial);
+
+% Practice trials
+nPracticeTrials = 10;
+pracTrials(nPracticeTrials) = StereoDisks();
+pracTrials.DurationSec = 1.0;
+pracTrials.DisparityDeg = 0.1;
+mainExperiment.addChoice(pracTrials);
+
+% Main trials
+logDisparityOrder = 1.0:-0.2:-0.6; % 0.25 to 10 arcmin
+mainSeriesRepetitions = 10;
+disparitiesDeg = 10 .^ logDisparityOrder / 60.0;
+disparitiesDeg = repmat(disparitiesDeg, 1, mainSeriesRepetitions);
 
 nTrials = length(disparitiesDeg);
+mainTrials(nTrials) = StereoDisks();
+mainTrials.DisparityDeg = disparitiesDeg;
 
-%[ hasChanges, output ] = GitChangeCheck( )
+mainExperiment.addChoice(mainTrials);
 
-mainExperiment = Group();
-for iTrial=1:nTrials
-    sd = StereoDisks(disparitiesDeg(iTrial));
-    mainExperiment.addChoice(sd);
-end
+%% Run experiment
 
 % Hold hardware open (ready) until end of experiment
 HWRef = HWReference();
