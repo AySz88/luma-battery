@@ -5,16 +5,16 @@ classdef StereoDisks < Task
         %VERTICAL_VS_CROSS = 3;
     end
     properties%(Access=private)
-        DisparityDeg
+        DisparityDeg = 0.2;
         
-        PreStimSec = 0.1;
+        PreStimSec = 0.2; % Duration to display background before stimulus
+        DurationSec = 0.5; % Stimulus duration; use Inf to wait until mouse/key press
+        DelaySec = 0.1; % "Blank" time between stimulus and response UI
         
-        DurationSec = 0.5;
-        
-        DelaySec = 0.1; % between stimulus and response UI
+        StimShortenable = true; % Whether stimulus can be cut short by a mouse or key press
         
         BGCheckSizeAM = 30.0; % size of squares in arcmin
-        BGLuminanceAvg = 0.75;
+        BGLuminanceAvg = 0.65;
         BGLuminanceSD = 0.20;
         nDisks = 4;
         StartDotTheta = 2 * pi * 0.125;
@@ -52,8 +52,10 @@ classdef StereoDisks < Task
     end
     
     methods
-        function self = StereoDisks(disparityDeg)
-            self.DisparityDeg = disparityDeg;
+        function self = StereoDisks(varargin)
+            if nargin >= 1
+                self.DisparityDeg = varargin(1);
+            end
         end
         
         % Returns:
@@ -64,8 +66,6 @@ classdef StereoDisks < Task
             HWRef = HWReference();
             hw = HWRef.hw;
             
-            KbWait([],1); % wait until all keys are released
-            
             ppd = hw.ppd;
             
             % Build background texture
@@ -75,12 +75,10 @@ classdef StereoDisks < Task
             
             bgImg = self.BGLuminanceAvg + ...
                 (randn(self.BGTextureSize([2 1])) * self.BGLuminanceSD);
+            bgImg = max(0.0, min(1.0, bgImg)); % Prevent going over white or below black
             bgImg = bgImg * hw.white;
             
             self.BGTexture = hw.ScreenCustomStereo('MakeTexture', hw.winPtr, bgImg);
-            
-            % Build annulus texture
-%             self.BGTexture = hw.ScreenCustomStereo('MakeTexture', hw.winPtr, bgImg);
             
             % Calculate positions of disks and objects
             reversedDisk = randi(self.nDisks);
@@ -110,6 +108,7 @@ classdef StereoDisks < Task
             
             annulusColor = self.AnnulusLum * hw.white;
             
+            %% Background stage
             delayStart = GetSecs();
             delayComplete = false;
             while ~delayComplete;
@@ -124,14 +123,21 @@ classdef StereoDisks < Task
                 end
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
-                if GetSecs() - delayStart > self.PreStimSec
+                % Wait until keys are released before starting the stimulus
+                timeout = GetSecs() - delayStart > self.PreStimSec;
+                keyDown = KbCheck();
+                if timeout && ~keyDown
                     delayComplete = true;
                 end
             end
             
-            
+            %% Stimulus display
             stimulusStart = GetSecs();
             displayComplete = false;
+            % Track mouse and keyboard state, so we can skip rest of
+            % stimulus when the mouse button or pressed key is RELEASED
+            preMouseDown = false;
+            preKeyDown = false;
             while ~displayComplete;
                 for i=0:1
                     % i=0 for left eye, i=1 for right eye
@@ -174,12 +180,19 @@ classdef StereoDisks < Task
                 end
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
-                if GetSecs() - stimulusStart > self.DurationSec
+                timeout = GetSecs() - stimulusStart > self.DurationSec;
+                [~,~,buttons] = GetMouse();
+                mouseClicked = preMouseDown && ~any(buttons);
+                keyPressed = preKeyDown && ~KbCheck();
+                if timeout || (self.StimShortenable && (mouseClicked || keyPressed))
                     displayComplete = true;
                 end
+                
+                preMouseDown = any(buttons);
+                preKeyDown = KbCheck();
             end
             
-            % Brief pause between stimulus and response UI
+            %% Brief pause between stimulus and response UI
             delayStart = GetSecs();
             delayComplete = false;
             while ~delayComplete;
@@ -194,11 +207,15 @@ classdef StereoDisks < Task
                 end
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
-                if GetSecs() - delayStart > self.DelaySec
+                timeout = GetSecs() - delayStart > self.DelaySec;
+                mouseDown = any(buttons);
+                
+                if timeout && ~mouseDown
                     delayComplete = true;
                 end
             end
             
+            %% Response collection
             % Set cursor to (near) the center
             mousePtr = hw.screenNum;
             scrCtrX = round(scrCenter(1));
@@ -289,6 +306,15 @@ classdef StereoDisks < Task
         function [results] = collectResults(self)
             % FIXME? Disks are currently numbered clockwise from the right x-axis
             % (due to the fact that positive Y-axis is downwards in graphics)
+        end
+        
+        function delete(self)
+            if ~isempty(self.BGTexture)
+                Screen('Close', self.BGTexture);
+            end
+            if ~isempty(self.AnnuTexture)
+                Screen('Close', self.AnnuTexture);
+            end
         end
     end
 end
