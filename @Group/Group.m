@@ -60,6 +60,12 @@ classdef Group < Task
             group.tasksToDo = [group.tasksToDo t];
         end
         
+        function addChoices(group, tasks)
+            for t = tasks
+                group.addChoice(t);
+            end
+        end
+        
         function value = completed(group)
             value = isempty(group.tasksToDo);
         end

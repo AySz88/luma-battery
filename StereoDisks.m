@@ -42,13 +42,23 @@ classdef StereoDisks < Task
         AnnulusLum = 0.5;
         AnnulusInnerRDeg = 2.0;
         AnnulusOuterRDeg = 3.0;
+        
+        FixWidthDeg = 0.5;
+        FrameWidthPx = 5; % Line width
+        NoniusWidthPx = 5; % Line width
+        NoniusLengthDeg = 0.5;
+        NoniusOffsetDeg = 0.5; % Distance from center of screen
     end
     
     properties(Access=private)
-        BGTexture
+        BGTexture = []
         BGTextureSize
-        AnnuTexture
-        AnnuTextureSize
+%         AnnuTexture
+%         AnnuTextureSize
+    end
+    
+    properties
+        Result
     end
     
     methods
@@ -121,6 +131,7 @@ classdef StereoDisks < Task
                     Screen('gluDisk', hw.winPtr, annulusColor, ...
                         scrCenter(1), scrCenter(2), annulusOuterSizePx);
                 end
+                self.drawFixMark(hw);
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
                 % Wait until keys are released before starting the stimulus
@@ -178,6 +189,7 @@ classdef StereoDisks < Task
 %                     Screen('DrawDots', hw.winPtr, ...
 %                         diskCenters, 10, [255 0 0 255], screenCenter, 1);
                 end
+                self.drawFixMark(hw);
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
                 timeout = GetSecs() - stimulusStart > self.DurationSec;
@@ -205,6 +217,7 @@ classdef StereoDisks < Task
                     Screen('gluDisk', hw.winPtr, annulusColor, ...
                         scrCenter(1), scrCenter(2), annulusOuterSizePx);
                 end
+                self.drawFixMark(hw);
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
                 timeout = GetSecs() - delayStart > self.DelaySec;
@@ -277,6 +290,7 @@ classdef StereoDisks < Task
                         self.MouseDotLum * hw.white, scrCenter, ...
                         self.MouseLineType);
                 end
+                self.drawFixMark(hw);
                 hw.ScreenCustomStereo('Flip', hw.winPtr);
                 
                 if buttons(1) == 1
@@ -294,11 +308,15 @@ classdef StereoDisks < Task
             end
             
             success = true;
-            result = [reversedDisk, activeDisk, correct];
+            result = [self.DisparityDeg, reversedDisk, activeDisk, correct];
+            
+            self.Result = result;
+            self.Completed = true;
         end
         
         % Returns whether the task(s) have been completed
         function value = completed(self)
+            value = self.Completed;
         end
         
         % Returns: a cell array of each result object, in the order they
@@ -306,14 +324,42 @@ classdef StereoDisks < Task
         function [results] = collectResults(self)
             % FIXME? Disks are currently numbered clockwise from the right x-axis
             % (due to the fact that positive Y-axis is downwards in graphics)
+            results = self.Result;
         end
         
         function delete(self)
-            if ~isempty(self.BGTexture)
-                Screen('Close', self.BGTexture);
-            end
-            if ~isempty(self.AnnuTexture)
-                Screen('Close', self.AnnuTexture);
+%             if ~isempty(self.BGTexture)
+%                 Screen('Close', self.BGTexture);
+%             end
+%             if ~isempty(self.AnnuTexture)
+%                 Screen('Close', self.AnnuTexture);
+%             end
+        end
+    end
+    
+    methods (Access = private)
+        function drawFixMark(self, hw)
+            fixWidthPx = self.FixWidthDeg * hw.ppd;
+            scrCenter = 0.5*[hw.width hw.height];
+            centerX = scrCenter(1);
+            centerY = scrCenter(2);
+            startOffset = self.NoniusOffsetDeg * hw.ppd;
+            endOffset = startOffset + self.NoniusLengthDeg * hw.ppd;
+            for i=0:1
+                % i=0 for left eye, i=1 for right eye
+                if i == 0
+                    % Nonius line up (negative y) for left eye
+                    startOffset = -startOffset;
+                    endOffset = -endOffset;
+                end
+                hw.ScreenCustomStereo('SelectStereoDrawBuffer', hw.winPtr, i);
+                Screen('FrameRect', hw.winPtr, hw.white, ...
+                    [scrCenter-0.5*fixWidthPx, scrCenter+0.5*fixWidthPx], ...
+                    self.FrameWidthPx);
+                Screen('DrawLine', hw.winPtr, hw.white, ...
+                    centerX, centerY+startOffset, ...
+                    centerX, centerY+endOffset, ...
+                    self.NoniusWidthPx);
             end
         end
     end
