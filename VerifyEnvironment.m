@@ -10,7 +10,7 @@ fprintf('=== PTB/Matlab Environment Information ===\n');
 fprintf('%s %s\n', PTBInfo.date, PTBInfo.time);
 fprintf('Running PTB project %s\n', PTBInfo.project);
 fprintf('Running PTB version %s\n', PTBInfo.version);
-fprintf('Operating system: %s : %s\n', PTBInfo.os, PTBCompInfo.system);
+fprintf('Operating system: %s (%s)\n', PTBInfo.os, PTBCompInfo.system);
 fprintf('PTB support level is: %s\n', PTBCompInfo.supported);
 fprintf('M-file interpreter: %s\n', PTBInfo.language);
 fprintf('\n');
@@ -31,7 +31,7 @@ try
                 ' Continue anyway? '], 's');
             switch contStr
                 case {'n', 'no'}
-                    return % stop script!
+                    error('Stopping.'); % stop script!
                 case {'y', 'yes'}
                     contConfirmed = true;
                 otherwise
