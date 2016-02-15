@@ -343,10 +343,10 @@ classdef StereoDisks < Task
             scrCenter = 0.5*[hw.width hw.height];
             centerX = scrCenter(1);
             centerY = scrCenter(2);
-            startOffset = self.NoniusOffsetDeg * hw.ppd;
-            endOffset = startOffset + self.NoniusLengthDeg * hw.ppd;
             for i=0:1
                 % i=0 for left eye, i=1 for right eye
+                startOffset = self.NoniusOffsetDeg * hw.ppd;
+                endOffset = startOffset + self.NoniusLengthDeg * hw.ppd;
                 if i == 0
                     % Nonius line up (negative y) for left eye
                     startOffset = -startOffset;
