@@ -64,7 +64,12 @@ classdef StereoDisks < Task
     methods
         function self = StereoDisks(varargin)
             if nargin >= 1
-                self.DisparityDeg = varargin(1);
+                dispaDeg = varargin{1};
+                if ~isnumeric(dispaDeg) || ~isscalar(dispaDeg)
+                    error('StereoDisk:WrongType', ...
+                        'Disparity must be a scalar number');
+                end
+                self.DisparityDeg = dispaDeg;
             end
         end
         

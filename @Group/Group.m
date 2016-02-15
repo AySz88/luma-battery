@@ -22,10 +22,10 @@ classdef Group < Task
     %   there currently is no error checking for this issue (TODO).  When
     %   this happens, you will observe a "stack overflow" error (I think?).
     
-    properties (GetAccess = private, SetAccess = private)
-        tasksToDo = []
-        tasksDone = []
-        results = []
+    properties% (GetAccess = private, SetAccess = private)
+        tasksToDo = {}
+        tasksDone = {}
+        results = {}
     end
     
     methods (Access = protected)
@@ -34,8 +34,12 @@ classdef Group < Task
             if group.completed()
                 task = [];
             else
-                task = group.tasksToDo(1);
+                task = group.tasksToDo{1};
             end
+        end
+        
+        function index = getIndexOf(group, task)
+            index = find(cellfun(@(x) eq(x, task), group.tasksToDo), 1);
         end
     end
     
@@ -46,7 +50,7 @@ classdef Group < Task
                     'The object must implement Task.');
                 throw(e);
             end
-            if find(group.tasksToDo == t, 1)
+            if ~isempty(group.getIndexOf(t))
                 e = MException('Group.addChoice:alreadyExists', ...
                     ['A handle to the same Task object should not be' ...
                     ' added twice to the same Group.  If you want to' ...
@@ -57,7 +61,11 @@ classdef Group < Task
                     ]);
                 throw(e);
             end
-            group.tasksToDo = [group.tasksToDo t];
+            
+            % FYI, this method of appending to cell array is much faster
+            % than A = [A {x}];
+            idx = length(group.tasksToDo)+1;
+            group.tasksToDo{idx} = t;
         end
         
         function addChoices(group, tasks)
@@ -94,13 +102,19 @@ classdef Group < Task
                 % TODO Any default action if success = false?
                 
                 if currentTask.completed()
-                    % Removal from the task list
-                    taskIdx = find(group.tasksToDo, currentTask, 1);
-                    group.tasksToDo(taskIdx) = group.tasksToDo(end);
-                    group.tasksToDo(end) = currentTask;
-                    group.tasksToDo = group.tasksToDo(1:end-1);
+                    % Remove from the task list
                     
-                    group.tasksDone = [group.tasksDone currentTask];
+                    taskIdx = group.getIndexOf(currentTask);
+                    
+                    % Swap the current task to position 1, just in case
+                    % for compatibility with potential subclasses
+                    group.tasksToDo{taskIdx} = group.tasksToDo{1};
+                    group.tasksToDo{1} = currentTask;
+                    
+                    group.tasksToDo = group.tasksToDo(2:end);
+                    
+                    idx = length(group.tasksDone)+1;
+                    group.tasksDone{idx} = currentTask;
                 end
             end
         end

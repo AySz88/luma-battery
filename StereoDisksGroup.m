@@ -1,9 +1,9 @@
 classdef StereoDisksGroup < Group
     %STEREODISKSGROUP Summary of this class goes here
-    %   Detailed explanation goes here
+    %   TODO Detailed explanation goes here
     
     properties
-        logDisparityAM = 1.0:-0.2:-0.6; % 10 arcmin down to 0.25
+        logDisparityAM = 1.0:-0.2:-0.6; % From 10 arcmin down to 0.25
         repetitions = 8;
         
         stopCheckFreq = 8;
@@ -20,6 +20,8 @@ classdef StereoDisksGroup < Group
         function self = StereoDisksGroup()
             self@Group();
             
+            % One block of trials for each disparity in logDisparityAM
+            % Blocks of (self.repetitions) trials
             disparitiesDeg = (10 .^ self.logDisparityAM) / 60.0;
             nDisparities = length(disparitiesDeg);
             nTrials = nDisparities * self.repetitions;
@@ -28,10 +30,8 @@ classdef StereoDisksGroup < Group
             allDisparitiesDeg = disparitiesDeg(trialOrder);
             
             mainTrials(nTrials) = StereoDisks();
-            for i=1:nTrials
-                % TODO is there a one-liner for this, instead of a for loop
-                mainTrials(i).DisparityDeg = allDisparitiesDeg(i);
-            end
+            disparitiesAsCell = num2cell(allDisparitiesDeg);
+            [mainTrials.DisparityDeg] = disparitiesAsCell{:};
             
             self.addChoices(mainTrials);
             

@@ -5,14 +5,14 @@ fullExperiment = Group();
 
 % One demo trial first
 demoTrial = StereoDisks();
-StereoDisks.DurationSec = Inf;
+demoTrial.DurationSec = Inf;
 fullExperiment.addChoice(demoTrial);
 
 % Practice trials
 nPracticeTrials = 10;
 pracTrials(nPracticeTrials) = StereoDisks();
-pracTrials.DurationSec = 1.0;
-pracTrials.DisparityDeg = 0.1;
+[pracTrials.DurationSec] = deal(1.0);
+[pracTrials.DisparityDeg] = deal(0.1);
 fullExperiment.addChoices(pracTrials);
 
 % Main trials
