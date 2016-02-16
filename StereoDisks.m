@@ -337,6 +337,8 @@ classdef StereoDisks < Task
             
             self.Result = result;
             self.Completed = true;
+            
+            self.runOnce@Task();
         end
         
         % Returns whether the task(s) have been completed

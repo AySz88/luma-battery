@@ -67,7 +67,8 @@ classdef (Abstract) Task < matlab.mixin.Copyable
         end
         
         % Returns whether the task(s) have been completed
-        % TODO needs to be a get/set function
+        %  This can't be a get/set function because subclasses in MATLAB
+        %  aren't able to override it
         function value = completed(task)
             value = task.Completed;
         end

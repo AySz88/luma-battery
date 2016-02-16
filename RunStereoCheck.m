@@ -61,7 +61,22 @@ fullExperiment.addChoice(mainGroup);
 % Hold hardware open (ready) until end of experiment
 HWRef = HWReference();
 
-fullExperiment.runAll();
+caughtError = [];
+try
+    fullExperiment.runAll();
+catch caughtError
+end
 
 % Allow hardware to close
 delete(HWRef);
+
+diary off
+
+workspaceSavePath = [dataFolder filesep 'workspace.mat'];
+save(workspaceSavePath);
+
+if ~caughtError
+    clear; % all finished as expected!
+else
+    rethrow(caughtError);
+end
