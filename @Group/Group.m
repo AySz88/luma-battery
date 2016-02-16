@@ -98,7 +98,14 @@ classdef Group < Task
                 success = false;
                 result = [];
             else
+                if ~isempty(group.OutFile) && isempty(currentTask.OutFile)
+                    % Group OutFile overrides the task OutFile
+                    % TODO overriding the setter function doesn't work :(
+                    currentTask.OutFile = group.OutFile;
+                end
+                
                 [success, result] = currentTask.runOnce();
+                
                 % TODO Any default action if success = false?
                 
                 if currentTask.completed()

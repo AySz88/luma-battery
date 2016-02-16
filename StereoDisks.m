@@ -16,8 +16,13 @@ classdef StereoDisks < Task
         BGCheckSizeAM = 30.0; % size of squares in arcmin
         BGLuminanceAvg = 0.65;
         BGLuminanceSD = 0.20;
+        
+        % Angles are clockwise from the right x-axis
+        % (due to the fact that positive Y-axis is downwards in graphics)
+        % FIXME? not very intuitive
         nDisks = 4;
-        StartDotTheta = 2 * pi * 0.125;
+        StartDotTheta = 2 * pi * 0.125; % Theta (position) of disk 1, radians
+        
         DiskLuminance = 0.0;
         DiskOffFromCenterDeg = 1.5; % How far center of each disk is from the center of the screen
         DiskSizeDeg = 1.0; % diameter
@@ -59,6 +64,21 @@ classdef StereoDisks < Task
     
     properties
         Result
+    end
+    
+    % === Flatfile handling functions ===
+    methods(Static)
+        function columns = getColumns()
+            columns = [getColumns@Task(), ...
+                {'Disparity (deg)', ...
+                'Reversed Disk No.', 'Selected Disk', 'Correct'}];
+        end
+    end
+    
+    methods
+        function data = collectFlatData(t)
+            data = [t.collectFlatData@Task(), t.Result];
+        end
     end
     
     methods
@@ -327,8 +347,6 @@ classdef StereoDisks < Task
         % Returns: a cell array of each result object, in the order they
         %   were run.
         function [results] = collectResults(self)
-            % FIXME? Disks are currently numbered clockwise from the right x-axis
-            % (due to the fact that positive Y-axis is downwards in graphics)
             results = self.Result;
         end
         
