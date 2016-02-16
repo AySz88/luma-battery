@@ -1,5 +1,5 @@
 % Ensure everything is OK with MATLAB, PTB, git, etc.
-tempDiaryName = 'diary.log';
+tempDiaryName = tempname();
 diary(tempDiaryName); % Temporary diary
 VerifyEnvironment;
 
