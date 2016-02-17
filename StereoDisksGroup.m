@@ -8,7 +8,7 @@ classdef StereoDisksGroup < Group
         
         stopCheckFreq = 8;
         stopCheckWindowSize = 16;
-        stopCount = 4; % Proportion of correct answers below which further disparities won't be tested
+        stopCount = 6; % Count of correct answers below which further disparities won't be tested
     end
     
     properties (Access = private)
@@ -43,7 +43,14 @@ classdef StereoDisksGroup < Group
             [s, r] = self.runOnce@Group();
             
             self.trialsDone = self.trialsDone + 1;
-            self.corrects(self.trialsDone) = r(4); %FIXME HACK
+            correct = r(4); %FIXME HACK
+            self.corrects(self.trialsDone) = correct;
+            
+            correctStr = 'correct';
+            if ~correct
+                correctStr = 'incorrect';
+            end
+            fprintf('Disparity %f was %s\n', r(1), correctStr);
         end
         
         function done = completed(self)
