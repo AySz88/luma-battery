@@ -8,8 +8,8 @@ function [ ] = DefaultParameters(HW)
     % Projector ('1424'), plasma ('1424plasma'), or stereoscope
     % ('1402chatnoir'), etc.
     HW.room = GetHostname();
-    %HW.screenNum = 2; % see Screen('Screens?')
-    HW.screenNum = length(Screen('Screens'))-1;
+    HW.screenNum = 1; % see Screen('Screens?')
+    %HW.screenNum = length(Screen('Screens'))-1;
     
     % HW.monWidth: width of entire viewable screen (cm)
     %   (Will later be multiplied by the fraction used, if stereoscope)
@@ -39,7 +39,7 @@ function [ ] = DefaultParameters(HW)
                     HW.useStereoscope = false;
                     knownRoom = true;
             end
-        case '1424plasma'
+        case {'1424plasma', 'martha-pc'}
             switch HW.screenNum
                 case 1 % Dev screen
                     HW.monWidth = 50;

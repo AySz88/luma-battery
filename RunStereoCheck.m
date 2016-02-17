@@ -75,7 +75,7 @@ diary off
 workspaceSavePath = [dataFolder filesep 'workspace.mat'];
 save(workspaceSavePath);
 
-if ~caughtError
+if isempty(caughtError)
     clear; % all finished as expected!
 else
     rethrow(caughtError);
