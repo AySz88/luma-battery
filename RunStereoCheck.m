@@ -51,10 +51,16 @@ pracTrials(nPracticeTrials) = StereoDisks();
 fullExperiment.addChoices(pracTrials);
 
 % Main trials
-mainGroup = StereoDisksGroup();
+mainGroup = StereoDisksGroup(1.0);
 mainGroup.OutFile = experimentDataFile;
+halfGroup = StereoDisksGroup(0.5);
+halfGroup.OutFile = experimentDataFile;
+doubleGroup = StereoDisksGroup(2.0);
+doubleGroup.OutFile = experimentDataFile;
 
 fullExperiment.addChoice(mainGroup);
+fullExperiment.addChoice(halfGroup);
+fullExperiment.addChoice(doubleGroup);
 
 %% Run experiment
 

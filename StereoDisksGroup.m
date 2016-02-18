@@ -4,11 +4,11 @@ classdef StereoDisksGroup < Group
     
     properties
         logDisparityAM = 1.0:-0.2:-0.6; % From 10 arcmin down to 0.25
-        repetitions = 8;
+        repetitions = 6;
         
-        stopCheckFreq = 8;
-        stopCheckWindowSize = 16;
-        stopCount = 6; % Count of correct answers below which further disparities won't be tested
+        stopCheckFreq = 6;
+        stopCheckWindowSize = 12;
+        stopCount = 4; % Count of correct answers at or below which further disparities won't be tested
     end
     
     properties (Access = private)
@@ -17,7 +17,10 @@ classdef StereoDisksGroup < Group
     end
     
     methods
-        function self = StereoDisksGroup()
+        function self = StereoDisksGroup(scaleFactor)
+            if nargin < 1
+                scaleFactor = 1.0;
+            end
             self@Group();
             
             % One block of trials for each disparity in logDisparityAM
@@ -32,6 +35,8 @@ classdef StereoDisksGroup < Group
             mainTrials(nTrials) = StereoDisks();
             disparitiesAsCell = num2cell(allDisparitiesDeg);
             [mainTrials.DisparityDeg] = disparitiesAsCell{:};
+            scalesAsCell = num2cell(scaleFactor * ones(1, nTrials));
+            [mainTrials.EccentricityFactor] = scalesAsCell{:};
             
             self.addChoices(mainTrials);
             
@@ -43,14 +48,14 @@ classdef StereoDisksGroup < Group
             [s, r] = self.runOnce@Group();
             
             self.trialsDone = self.trialsDone + 1;
-            correct = r(4); %FIXME HACK
+            correct = r(5); %FIXME HACK
             self.corrects(self.trialsDone) = correct;
             
             correctStr = 'correct';
             if ~correct
                 correctStr = 'incorrect';
             end
-            fprintf('Disparity %f was %s\n', r(1), correctStr);
+            fprintf('Disparity %f at scale factor %f was %s\n', r(1), r(2), correctStr);
         end
         
         function done = completed(self)
@@ -68,6 +73,17 @@ classdef StereoDisksGroup < Group
                 window = (t-w+1) : t;
                 correctCount = sum(self.corrects(window));
                 done = correctCount <= self.stopCount;
+                
+                % Show stop-criteria check on console
+                if done
+                    stopStr = 'stopping';
+                else
+                    stopStr = 'continuing';
+                end
+                
+                fprintf(['Stop criteria after %i trials total:' ...
+                    ' %i / %i (%s)\n'], ...
+                    t, correctCount, length(window), stopStr);
             else
                 done = false;
             end

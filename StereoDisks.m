@@ -30,6 +30,8 @@ classdef StereoDisks < Task
         DiskColor = 0;
         DotType = 1; % Screen(DrawDots) dot type argument
         
+        EccentricityFactor = 1.0; % Factor to scale the size of the disks and most of the stimulus (but not disparity or nonius lines)
+        
         DisparityType = StereoDisks.CROSS_VS_UNCROSS;
         DisparityDirection = 'x';
         
@@ -71,6 +73,7 @@ classdef StereoDisks < Task
         function columns = getColumns()
             columns = [getColumns@Task(), ...
                 {'Disparity (deg)', ...
+                'Eccentricity Factor', ...
                 'Reversed Disk No.', 'Selected Disk', 'Correct'}];
         end
     end
@@ -102,6 +105,7 @@ classdef StereoDisks < Task
             hw = HWRef.hw;
             
             ppd = hw.ppd;
+            ef = self.EccentricityFactor;
             
             % Build background texture
             BGCheckSizePx = self.BGCheckSizeAM / 60.0 * ppd;
@@ -120,9 +124,9 @@ classdef StereoDisks < Task
             
             scrCenter = 0.5*[hw.width hw.height];
             angles = (0:self.nDisks-1) * 2*pi/self.nDisks + self.StartDotTheta;
-            diskOffsetsPx = self.DiskOffFromCenterDeg * ppd;
+            diskOffsetsPx = self.DiskOffFromCenterDeg * ppd * ef;
                 
-            posJitterPx = self.DiskPosJitterDeg * ppd;
+            posJitterPx = self.DiskPosJitterDeg * ppd * ef;
             jitterOffsets = (rand(1,self.nDisks) - 0.5) * posJitterPx;
             
             idealCenters = [cos(angles); sin(angles)] * diskOffsetsPx;
@@ -138,8 +142,8 @@ classdef StereoDisks < Task
                 disparityOffsets(reversedDisk) = disparityOffsetPx;
             end
             
-            diskSizePx = self.DiskSizeDeg * ppd;
-            annulusOuterSizePx = self.AnnulusOuterRDeg * hw.ppd;
+            diskSizePx = self.DiskSizeDeg * ppd * ef;
+            annulusOuterSizePx = self.AnnulusOuterRDeg * ppd * ef;
             
             annulusColor = self.AnnulusLum * hw.white;
             
@@ -202,10 +206,18 @@ classdef StereoDisks < Task
                         currEyeCenters(offsetRowIdx,:) + ...
                         disparityMult * disparityOffsets;
 
-                    Screen('DrawDots', hw.winPtr, ...
-                        currEyeCenters, diskSizePx, self.DiskColor * hw.white, ...
-                        scrCenter, self.DotType);
-
+%                     Screen('DrawDots', hw.winPtr, ...
+%                         currEyeCenters, diskSizePx, self.DiskColor * hw.white, ...
+%                         scrCenter, self.DotType);
+                    
+                    rects = ...
+                        [currEyeCenters(1,:) + scrCenter(1) - 0.5*diskSizePx; ...
+                         currEyeCenters(2,:) + scrCenter(2) - 0.5*diskSizePx; ...
+                         currEyeCenters(1,:) + scrCenter(1) + 0.5*diskSizePx; ...
+                         currEyeCenters(2,:) + scrCenter(2) + 0.5*diskSizePx];
+                    Screen('FillOval', hw.winPtr, ...
+                        self.DiskColor * hw.white, rects);
+                    
                     % For debugging
                     % Yellow = original locations, red = jittered locations
 %                     Screen('DrawDots', hw.winPtr, ...
@@ -259,10 +271,10 @@ classdef StereoDisks < Task
             scrCtrX = round(scrCenter(1));
             scrCtrY = round(scrCenter(2));
             SetMouse(scrCtrX, scrCtrY, mousePtr);
-            mouseMaxPx = self.MouseMaxWanderDeg * ppd;
+            mouseMaxPx = self.MouseMaxWanderDeg * ppd * ef;
             
-            diskResponseSizePx = self.DiskResponseSizeDeg * ppd;
-            diskResponseOutlineSizePx = self.DiskResponseOutlineSizeDeg * ppd;
+            diskResponseSizePx = self.DiskResponseSizeDeg * ppd * ef;
+            diskResponseOutlineSizePx = self.DiskResponseOutlineSizeDeg * ppd * ef;
             
             trialComplete = false;
             while ~trialComplete
@@ -291,20 +303,41 @@ classdef StereoDisks < Task
                     Screen('gluDisk', hw.winPtr, annulusColor, ...
                         scrCenter(1), scrCenter(2), annulusOuterSizePx);
                     
-                    Screen('DrawDots', hw.winPtr, ...
-                        idealCenters, diskResponseOutlineSizePx, ...
-                        self.DiskResponseOutlineColor * hw.white, ...
-                        scrCenter, self.DotType);
+%                     Screen('DrawDots', hw.winPtr, ...
+%                         idealCenters, diskResponseOutlineSizePx, ...
+%                         self.DiskResponseOutlineColor * hw.white, ...
+%                         scrCenter, self.DotType);
+                    outlineRects = ...
+                        [idealCenters(1,:) + scrCenter(1) - 0.5*diskResponseOutlineSizePx; ...
+                         idealCenters(2,:) + scrCenter(2) - 0.5*diskResponseOutlineSizePx; ...
+                         idealCenters(1,:) + scrCenter(1) + 0.5*diskResponseOutlineSizePx; ...
+                         idealCenters(2,:) + scrCenter(2) + 0.5*diskResponseOutlineSizePx];
+                    Screen('FillOval', hw.winPtr, ...
+                        self.DiskResponseOutlineColor * hw.white, outlineRects);
                     
-                    Screen('DrawDots', hw.winPtr, ...
-                        idealCenters, diskResponseSizePx, ...
-                        self.DiskColor * hw.white, ...
-                        scrCenter, self.DotType);
+%                     Screen('DrawDots', hw.winPtr, ...
+%                         idealCenters, diskResponseSizePx, ...
+%                         self.DiskColor * hw.white, ...
+%                         scrCenter, self.DotType);
+                    idealRects = ...
+                        [idealCenters(1,:) + scrCenter(1) - 0.5*diskResponseSizePx; ...
+                         idealCenters(2,:) + scrCenter(2) - 0.5*diskResponseSizePx; ...
+                         idealCenters(1,:) + scrCenter(1) + 0.5*diskResponseSizePx; ...
+                         idealCenters(2,:) + scrCenter(2) + 0.5*diskResponseSizePx];
+                    Screen('FillOval', hw.winPtr, ...
+                        self.DiskColor * hw.white, idealRects);
                     
                     % Draw over the active disk with the highlight color
-                    Screen('DrawDots', hw.winPtr, ...
-                        idealCenters(:, activeDisk), diskResponseSizePx, ...
-                        self.ActiveDiskLum * hw.white, scrCenter, self.DotType);
+%                     Screen('DrawDots', hw.winPtr, ...
+%                         idealCenters(:, activeDisk), diskResponseSizePx, ...
+%                         self.ActiveDiskLum * hw.white, scrCenter, self.DotType);
+                    highlightRect = ...
+                        [idealCenters(1,activeDisk) + scrCenter(1) - 0.5*diskResponseSizePx; ...
+                         idealCenters(2,activeDisk) + scrCenter(2) - 0.5*diskResponseSizePx; ...
+                         idealCenters(1,activeDisk) + scrCenter(1) + 0.5*diskResponseSizePx; ...
+                         idealCenters(2,activeDisk) + scrCenter(2) + 0.5*diskResponseSizePx];
+                    Screen('FillOval', hw.winPtr, ...
+                        self.ActiveDiskLum * hw.white, highlightRect);
                     
                     % Draw the mouse location
                     Screen('DrawDots', hw.winPtr, ...
@@ -332,8 +365,15 @@ classdef StereoDisks < Task
                 PsychPortAudio('Start', hw.wrongSoundHandle);
             end
             
+            try
+                Screen('Close', self.BGTexture);
+                self.BGTexture = [];
+            catch
+            end
+            
             success = true;
-            result = [self.DisparityDeg, reversedDisk, activeDisk, correct];
+            result = [self.DisparityDeg, self.EccentricityFactor, ...
+                reversedDisk, activeDisk, correct];
             
             self.Result = result;
             self.Completed = true;
@@ -353,9 +393,12 @@ classdef StereoDisks < Task
         end
         
         function delete(self)
-%             if ~isempty(self.BGTexture)
-%                 Screen('Close', self.BGTexture);
-%             end
+            if ~isempty(self.BGTexture)
+                try
+                    Screen('Close', self.BGTexture);
+                catch
+                end
+            end
 %             if ~isempty(self.AnnuTexture)
 %                 Screen('Close', self.AnnuTexture);
 %             end
