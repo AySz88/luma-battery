@@ -28,7 +28,7 @@ classdef DataFile < handle
     
     methods
         % Constructor: Open and prepare a new data file
-        function df = DataFile(path, columns)
+        function df = DataFile(path, columns, metadata)
             % Check inputs
             if isempty(path)
                 path = DataFile.defaultPath();
@@ -39,6 +39,17 @@ classdef DataFile < handle
             end
             
             % if isempty(columns) ... throw exception?
+            
+            if nargin < 3
+                metadata = [];
+            end
+            % ensure metadata ends with a new-line (if it exists)
+            newline = sprintf('\n');
+            if ~isempty(metadata)
+                if strcmpi(newline, metadata(end))
+                    metadata(end+1) = newline;
+                end
+            end
             
             % Initialize internal storage of data
             df.data = [];
@@ -51,8 +62,9 @@ classdef DataFile < handle
                 end
             end
             
-            % Open file and write header line
+            % Open file and write header lines
             df.fileHandle = fopen(path, 'a');
+            fprintf(df.fileHandle, metadata);
             if length(columns) > 1
                 fprintf(df.fileHandle, '%s,', columns{1:end-1});
             end

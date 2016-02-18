@@ -28,10 +28,10 @@ diary(diaryFile);
 sdColumns = StereoDisks.getColumns();
 
 practiceFilePath = [dataFolder filesep 'practice.csv'];
-practiceDataFile = DataFile(practiceFilePath, sdColumns);
+practiceDataFile = DataFile(practiceFilePath, sdColumns, subfolder);
 
 experimentFilePath = [dataFolder filesep 'stereodisks.csv'];
-experimentDataFile = DataFile(experimentFilePath, sdColumns);
+experimentDataFile = DataFile(experimentFilePath, sdColumns, subfolder);
 
 %% Define the experiment's trials
 fullExperiment = Group();
