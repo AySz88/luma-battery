@@ -25,7 +25,7 @@ classdef StereoDisksGroup < Group
             disparitiesDeg = (10 .^ self.logDisparityAM) / 60.0;
             nDisparities = length(disparitiesDeg);
             nTrials = nDisparities * self.repetitions;
-            trialOrder = floor(((1:nTrials)-1) / nDisparities)+1;
+            trialOrder = floor(((1:nTrials)-1) / self.repetitions)+1;
             
             allDisparitiesDeg = disparitiesDeg(trialOrder);
             
