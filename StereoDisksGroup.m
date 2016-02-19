@@ -8,7 +8,7 @@ classdef StereoDisksGroup < Group
         
         stopCheckFreq = 6;
         stopCheckWindowSize = 12;
-        stopCount = 4; % Count of correct answers at or below which further disparities won't be tested
+        stopCount = 6; % Count of correct answers at or below which further disparities won't be tested
     end
     
     properties (Access = private)
