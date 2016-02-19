@@ -1,7 +1,6 @@
 classdef NoniusAdjustmentTask < Task
     
     properties
-        nAdj = 3;                   % number of adjustments tasks in each adjustment subsession
         outerFuseSize = 6.0;                % length of side of outer fusion square (around simulus) in degrees
         outerFuseThickness = 0.3;           % thickness of outer fusion square lines in degrees
         innerFuseSize = 1.8;                % length of size of inner fusion square in degrees
@@ -13,8 +12,8 @@ classdef NoniusAdjustmentTask < Task
         adjustmentStep = 0.1;               % step of the adjustment lines in pixels
         
         background = 0.25;
-        leftLuminance = 0.75;
-        rightLuminance = 0.75;
+        leftLuminance = 0.45;
+        rightLuminance = 1.00;
         
         mouseMovementMult = 0.5; % How much lines should move per pixel of mouse movement
         
@@ -22,7 +21,16 @@ classdef NoniusAdjustmentTask < Task
         %lockWidthDeg
         %lockSquares
     end
-
+    
+    properties
+        % FIXME no longer used; remove this variable
+        nAdj = 1;  % number of adjustments tasks in each adjustment subsession
+    end
+    
+    properties
+        Result
+    end
+    
     methods
         function [success, result] = runOnce(self)
             % History (oldest at top):
@@ -133,14 +141,14 @@ classdef NoniusAdjustmentTask < Task
 
                         % Left eye
                         HW.ScreenCustomStereo('SelectStereoDrawBuffer', HW.winPtr, 0);
-                        Screen('FillRect', HW.winPtr, self.background);
+                        Screen('FillRect', HW.winPtr, self.background * HW.white);
                         leftLumRaw = HW.white * self.leftLuminance * [1 1 1];
                         Screen('FrameRect',HW.winPtr, leftLumRaw, RectPositions, RectPens);
                         Screen('DrawLines',HW.winPtr, LinePositionsL, self.innerFuseTargetThickness, leftLumRaw, [], 1);
 
                         % Right eye
                         HW.ScreenCustomStereo('SelectStereoDrawBuffer', HW.winPtr, 1);
-                        Screen('FillRect', HW.winPtr, self.background);
+                        Screen('FillRect', HW.winPtr, self.background * HW.white);
                         rightLumRaw = HW.white * self.rightLuminance * [1 1 1];
                         Screen('FrameRect',HW.winPtr, rightLumRaw, RectPositions, RectPens);
                         Screen('DrawLines',HW.winPtr, LinePositionsR, self.innerFuseTargetThickness, rightLumRaw, [], 1);
@@ -193,15 +201,38 @@ classdef NoniusAdjustmentTask < Task
                 fprintf('Fixation Disparity: %+6.2f px (%+5.2f°)\n', ...
                     fixDisp(i), angDisp(i));
             end
-
-            self.runOnce@Task();
             success = true;
             result = [angDisp, fixDisp, bias, posInit, posResp, respTime];
+            
+            self.Completed = true;
+            self.Result = result;
+
+            self.runOnce@Task();
         end
         
         % Returns: a cell array of each result object, in the order they
         %   were run.
         function [results] = collectResults(task)
+            error('Not yet implemented');
+        end
+    end
+    
+    % === Flatfile handling functions ===
+    methods(Static)
+        function columns = getColumns()
+            columns = [getColumns@Task(), ...
+                {'Fixation Disparity (deg) vertical', 'Fixation Disparity (deg) horizontal', ...
+                'Fixation Disparity (px) vertical', 'Fixation Disparity (px) horizontal', ...
+                'Off-center bias (px) vertical', 'Off-center bias (px) horizontal', ...
+                'Initial Disparity Position (px) vertical', 'Initial Disparity Position (px) horizontal', ...
+                'Response Position (px) vertical','Response Position (px) horizontal',...
+                'Response Time (s) vertical', 'Response Time (s) horizontal'}];
+        end
+    end
+    
+    methods
+        function data = collectFlatData(t)
+            data = [t.collectFlatData@Task(), t.Result];
         end
     end
 

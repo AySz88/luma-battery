@@ -4,11 +4,11 @@ classdef StereoDisks < Task
         ZERO_VS_CROSS = 2;
         %VERTICAL_VS_CROSS = 3;
     end
-    properties%(Access=private)
+    properties
         DisparityDeg = 0.2;
         
-        PreStimSec = 0.2; % Duration to display background before stimulus
-        DurationSec = 0.5; % Stimulus duration; use Inf to wait until mouse/key press
+        PreStimSec = 0.75; % Duration to display background before stimulus
+        DurationSec = 1.0; % Stimulus duration; use Inf to wait until mouse/key press
         DelaySec = 0.1; % "Blank" time between stimulus and response UI
         
         StimShortenable = true; % Whether stimulus can be cut short by a mouse or key press
