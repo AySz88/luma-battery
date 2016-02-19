@@ -77,7 +77,8 @@ function [ ] = Initialize( HW )
         HideCursor(HW.screenNum);
 
         % Initialize audio players
-        InitializePsychSound;
+        lowLatFlag = HW.requestPTBLowAudioLatency;
+        InitializePsychSound(lowLatFlag);
         HW.rightSoundHandle = InitSound(HW.rightSound);
         HW.wrongSoundHandle = InitSound(HW.wrongSound);
         HW.failSoundHandle = InitSound(HW.failSound);

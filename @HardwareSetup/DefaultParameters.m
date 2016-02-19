@@ -186,6 +186,7 @@ function [ ] = DefaultParameters(HW)
     
     % Feedback sounds:
     % sounds for right and wrong answers (may be the same sound)
+    HW.requestPTBLowAudioLatency = true;
     HW.rightSound = importdata('media/Windows Balloon (Quirky) 3.wav');
     HW.wrongSound = ...
         importdata('media/Windows Critical Stop (Quirky) 2.wav');

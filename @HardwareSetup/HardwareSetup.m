@@ -45,6 +45,7 @@ classdef HardwareSetup < handle
         haltKey
         validKeys
         
+        requestPTBLowAudioLatency
         rightSound % filename
         wrongSound
         failSound
