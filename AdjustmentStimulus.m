@@ -6,14 +6,40 @@ classdef (Abstract) AdjustmentStimulus < Task
         CurrValue
     end
     
+    properties(Abstract)
+        initValue
+    end
+    
     properties(Constant)
         stopKey = 'return'; % FIXME hack
+    end
+    
+    methods(Static)
+        function columns = getColumns(varargin)
+            if nargin < 1
+                columns = [getColumns@Task(), ...
+                    {'Final value', 'Initial value'}];
+            else
+                unitText = varargin{1};
+                columns = [getColumns@Task(), ...
+                    {sprintf('Final value (%s)', unitText), ...
+                     sprintf('Initial value (%s)', unitText)}];
+            end
+        end
+    end
+    
+    methods
+        function data = collectFlatData(t)
+            data = [t.collectFlatData@Task(), t.Result, t.initValue];
+        end
     end
     
     methods
         function [success, result] = runOnce(self)
             HWRef = HWReference();
             HW = HWRef.hw;
+            
+            self.CurrValue = self.initValue;
             
             stop = false;
             

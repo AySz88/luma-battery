@@ -17,8 +17,8 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         maxValue = 2.5;
         minValue = -2.5;
         
-        flashUptime = 1.0;
-        flashDowntime = 1.0;
+        flashUptime = 1.5;
+        flashDowntime = 0.75;
         
         %RECTANGULARSINUSOIDDISPLAY Draws a grating + fusion lock into the window
         % Grating is oriented horizontally (lum changes in vertical direction) with
@@ -38,6 +38,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         %  markHeightPx : Height of mark on screen in pixels
         %  markOffsetPx : Offset of height of mark (for bracketing)
         bgLum = 0.5;
+        displayContrast = [0.5 0.5];
         widthDeg = 0.25;
         heightDeg = 6.0;
         bands = 16; % # of bands, use [] for no banding
@@ -53,25 +54,26 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
     end
     
     % === Flatfile handling functions ===
+    properties(Constant)
+        unitText = 'log10 contrast ratio, l/r';
+    end
     methods(Static)
         function columns = getColumns()
-            columns = [getColumns@AdjustmentStimulus(), ...
-                {'Initial value (log10 contrast ratio, l/r)', ...
-                'Final value (log10 contrast ratio)'}];
+            units = RectSinusoidStimulus.unitText;
+            columns = getColumns@AdjustmentStimulus(units);
         end
     end
     
     methods
         function data = collectFlatData(t)
-            data = [t.collectFlatData@AdjustmentStimulus(), t.initValue];
+            data = t.collectFlatData@AdjustmentStimulus();
         end
     end
     
+    % === Main methods ===
     methods
         function self = RectSinusoidStimulus()
             self = self@AdjustmentStimulus();
-            
-            self.CurrValue = self.initValue;
         end
         
         function [success, result] = runOnce(self)
@@ -82,29 +84,39 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         end
         
         function [] = draw(self)
+            % Determine how the value changes the stimulus first
+            value = self.CurrValue;
+            
+            self.displayContrast = [(10^value), 1]./(10^value + 1);
+            %{
+            % Luminance maximization method
+            if value > 0
+                self.displayContrast = [1 10^(-value)];
+            else
+                self.displayContrast = [10^value 1];
+            end
+            %}
+            
+            self.noSideEffectDraw();
+        end
+        
+        function [] = noSideEffectDraw(self)
+            % Draws the stimulus using only the properties contained within,
+            % ignoring the CurrValue.
+            % (This is a helper to make it easier to override draw().)
+            
             HWRef = HWReference();
             HW = HWRef.hw;
-            
-            value = self.CurrValue;
             
             % decide whether to display full stimulus
             % divides time up into up and down times
             flashTime = self.flashUptime + self.flashDowntime;
             flashUp = mod(GetSecs, flashTime) < self.flashUptime;
             if flashUp
-                contrasts = ...
-                    self.totalContrast .* [(10^value), 1]./(10^value + 1);
+                currContrasts = self.totalContrast .* self.displayContrast;
             else
-                contrasts = [0 0];
+                currContrasts = [0 0];
             end
-            %{
-            % Luminance maximization method
-            if value > 0
-                contrasts = [1 10^(-value)];
-            else
-                contrasts = [10^value 1];
-            end
-            %}
             
             center = 0.5 .* (HW.screenRect([3 4]) - HW.screenRect([1 2]));
             width = round(self.widthDeg * HW.ppd);
@@ -113,7 +125,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
             destYs = center(2) + [-0.5 0.5] .* height;
             trueDestRect = [destXs(1) destYs(1) destXs(2) destYs(2)];
             
-            if ~isfield(self, 'bands') || isempty(self.bands)
+            if isempty(self.bands)
                 self.bands = height;
             end
             
@@ -123,9 +135,9 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
             
             amp = min(1-self.bgLum, self.bgLum); % maximum possible contrast
             
-            stimImg(:,:,:,1) = amp * contrasts(1) .* ...
+            stimImg(:,:,:,1) = amp * currContrasts(1) .* ...
                 SinusoidImage(width, self.bands, self.phases(1), self.cycles, additive);
-            stimImg(:,:,:,2) = amp * contrasts(2) .* ...
+            stimImg(:,:,:,2) = amp * currContrasts(2) .* ...
                 SinusoidImage(width, self.bands, self.phases(2), self.cycles, additive);
             
             stimImg = self.bgLum + stimImg;
@@ -157,6 +169,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
             HW.ScreenCustomStereo('Flip', HW.winPtr);
         end
         
+        % === UI methods (implementing AdjustmentStimulus) ===
         function [] = goUp(self)
             % wants left eye (higher) to be brighter
             self.CurrValue = self.CurrValue + self.stepSize;
@@ -200,7 +213,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         end
         
         function [results] = collectResults(task)
-            error('Not yet implemented');
+            results = task.Result;
         end
     end
 end
