@@ -20,6 +20,13 @@ classdef (Abstract) AdjustmentStimulus < Task
             KbWait([],1); % wait until all keys are released
             wasKeyUp = false;
             
+            % Set cursor to (near) the center
+            mousePtr = HW.screenNum;
+            scrCenter = round(0.5*[HW.width HW.height]);
+            scrCtrX = scrCenter(1);
+            scrCtrY = scrCenter(2);
+            SetMouse(scrCtrX, scrCtrY, mousePtr);
+            
             while ~stop
                 % Present new stimulus frame
                 self.draw();
@@ -52,6 +59,16 @@ classdef (Abstract) AdjustmentStimulus < Task
                     end
                 end
                 wasKeyUp = ~keyDown;
+                
+                % Look for displacement in mouse, then reset it
+                [mouseX, mouseY, buttons] = GetMouse(mousePtr);
+                mouseVec = [mouseX - scrCtrX, mouseY - scrCtrY];
+                if buttons(1)==1
+                    stop = self.stopCheck();
+                else
+                    self.handleMouse(mouseVec);
+                end
+                SetMouse(scrCtrX, scrCtrY, mousePtr);
             end
             
             success = true;
@@ -65,9 +82,23 @@ classdef (Abstract) AdjustmentStimulus < Task
     end
     
     methods (Abstract)
+        % Function called every frame to refresh the screen
         [] = draw(task);
+        
+        % Function called each time the subject presses HW.upKey
         [] = goUp(task);
+        % Function called each time the subject presses HW.downKey
         [] = goDown(task);
+        
+        % Function called every frame on mouse position changes
+        % Arguments:
+        %   vector = [x,y] pixel vector of mouse movement this frame
+        % Relative movement only, one frame at a time
+        % Mouse is reset to the middle of the frame after this call
+        [] = handleMouse(task, vector);
+        
+        % Function called when the subject says they are finished
+        % Returns true iff the task should stop / is completed
         [stop] = stopCheck(task);
     end
     

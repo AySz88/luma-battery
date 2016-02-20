@@ -14,6 +14,9 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         stepSize = log10(1.20); % percent changes (multiplicative)
         totalContrast = 1.0;
         
+        maxValue = 2.5;
+        minValue = -2.5;
+        
         flashUptime = 1.0;
         flashDowntime = 1.0;
         
@@ -45,6 +48,8 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         markWidthPx = 100;
         markHeightPx = 5;
         markOffsetPx = 0;
+        
+        mouseValPerPx = 0.05; % Change in value per pixel vertical mouse movement
     end
     
     % === Flatfile handling functions ===
@@ -155,16 +160,36 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         function [] = goUp(self)
             % wants left eye (higher) to be brighter
             self.CurrValue = self.CurrValue + self.stepSize;
+            self.clipValue();
             disp(10^self.CurrValue);
         end
         
         function [] = goDown(self)
             self.CurrValue = self.CurrValue - self.stepSize;
+            self.clipValue();
             disp(10^self.CurrValue);
         end
+        
+        function [] = handleMouse(self, mouseVec)
+            deltaY = mouseVec(2);
+            valueChange = self.mouseValPerPx * deltaY;
+            
+            self.CurrValue = self.CurrValue + valueChange;
+            self.clipValue();
+            
+            if abs(valueChange) > 0.02
+                disp(10^self.CurrValue);
+            end
+        end
+        
+        function [] = clipValue(self)
+            self.CurrValue = min(self.CurrValue, self.maxValue);
+            self.CurrValue = max(self.CurrValue, self.minValue);
+        end
 
-        function [stop] = stopCheck(~)
+        function [stop] = stopCheck(self)
             stop = true;
+            fprintf('Stopping at: %f\n', 10^self.CurrValue);
 %             % For bracketing:
 %             self.markStage = mod(self.markStage, length(self.markBracketsPx)) + 1;
 %             stop = (self.markStage == 1); % back to start
