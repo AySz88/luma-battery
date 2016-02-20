@@ -59,10 +59,31 @@ preNoniusDataFile = DataFile(preNoniusFilePath, noniusColumns, metadata);
 postNoniusFilePath = [dataFolder filesep 'postnonius.csv'];
 postNoniusDataFile = DataFile(postNoniusFilePath, noniusColumns, metadata);
 
+pracDSColumns = RectSinusoidControlStimulus.getColumns();
+pracDSFilePath = [dataFolder filesep 'pracDingSperling.csv'];
+pracDSDataFile = DataFile(pracDSFilePath, pracDSColumns, metadata);
+
+dSColumns = RectSinusoidStimulus.getColumns();
+dSFilePath = [dataFolder filesep 'dingSperling.csv'];
+dSDataFile = DataFile(dSFilePath, dSColumns, metadata);
+
 %% Define the experiment's trials
 fullExperiment = Group();
 
-% One demo trial first
+% One demo trial for Ding-Sperling
+demoDSTrial = RectSinusoidControlStimulus();
+demoDSTrial.OutFile = pracDSDataFile;
+fullExperiment.addChoice(demoDSTrial);
+
+% Ding-Sperling trials
+dsInitVals = num2cell(log10([1/0.6, 0.6, 1.0, 0.6, 1/0.6]));
+nDingSperlingTrials = 5;
+dSTrials(nDingSperlingTrials) = RectSinusoidStimulus();
+[dSTrials.initValue] = dsInitVals{:};
+[dSTrials.OutFile] = deal(dSDataFile);
+fullExperiment.addChoices(dSTrials);
+
+% One demo trial for stereo disks
 demoTrial = StereoDisks();
 demoTrial.DurationSec = Inf;
 demoTrial.OutFile = practiceDataFile;

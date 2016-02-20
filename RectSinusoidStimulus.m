@@ -57,7 +57,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
     methods(Static)
         function columns = getColumns(varargin)
             if nargin < 1
-                units = 'log10 contrast ratio, l/r';
+                units = 'log10 contrast ratio (l/r)';
             else
                 units = varargin{1};
             end

@@ -43,7 +43,16 @@ classdef (Abstract) AdjustmentStimulus < Task
             
             stop = false;
             
-            KbWait([],1); % wait until all keys are released
+            % wait until all keys and mouse are released
+            [~,~,buttons] = GetMouse();
+            mouseDown = any(buttons);
+            keyDown = KbCheck();
+            while mouseDown || keyDown
+                [~,~,buttons] = GetMouse();
+                mouseDown = any(buttons);
+                keyDown = KbCheck();
+            end
+            
             wasKeyUp = false;
             
             % Set cursor to (near) the center
