@@ -54,12 +54,13 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
     end
     
     % === Flatfile handling functions ===
-    properties(Constant)
-        unitText = 'log10 contrast ratio, l/r';
-    end
     methods(Static)
-        function columns = getColumns()
-            units = RectSinusoidStimulus.unitText;
+        function columns = getColumns(varargin)
+            if nargin < 1
+                units = 'log10 contrast ratio, l/r';
+            else
+                units = varargin{1};
+            end
             columns = getColumns@AdjustmentStimulus(units);
         end
     end
@@ -174,13 +175,13 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
             % wants left eye (higher) to be brighter
             self.CurrValue = self.CurrValue + self.stepSize;
             self.clipValue();
-            disp(10^self.CurrValue);
+%             disp(10^self.CurrValue);
         end
         
         function [] = goDown(self)
             self.CurrValue = self.CurrValue - self.stepSize;
             self.clipValue();
-            disp(10^self.CurrValue);
+%             disp(10^self.CurrValue);
         end
         
         function [] = handleMouse(self, mouseVec)
@@ -190,9 +191,9 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
             self.CurrValue = self.CurrValue + valueChange;
             self.clipValue();
             
-            if abs(valueChange) > 0.02
-                disp(10^self.CurrValue);
-            end
+%             if abs(valueChange) > 0.02
+%                 disp(10^self.CurrValue);
+%             end
         end
         
         function [] = clipValue(self)
@@ -202,7 +203,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
 
         function [stop] = stopCheck(self)
             stop = true;
-            fprintf('Stopping at: %f\n', 10^self.CurrValue);
+            fprintf('Stopping at: %f\n', self.CurrValue);
 %             % For bracketing:
 %             self.markStage = mod(self.markStage, length(self.markBracketsPx)) + 1;
 %             stop = (self.markStage == 1); % back to start
