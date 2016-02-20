@@ -64,10 +64,6 @@ classdef StereoDisks < Task
 %         AnnuTextureSize
     end
     
-    properties
-        Result
-    end
-    
     % === Flatfile handling functions ===
     methods(Static)
         function columns = getColumns()

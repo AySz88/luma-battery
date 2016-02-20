@@ -8,6 +8,7 @@ classdef (Abstract) Task < matlab.mixin.Copyable
     end
     
     properties (Access = protected)
+        Result
         Completed = false;
     end
     
@@ -68,7 +69,7 @@ classdef (Abstract) Task < matlab.mixin.Copyable
         
         % Returns whether the task(s) have been completed
         %  This can't be a get/set function because subclasses in MATLAB
-        %  aren't able to override it
+        %  aren't able to override get/set functions
         function value = completed(task)
             value = task.Completed;
         end

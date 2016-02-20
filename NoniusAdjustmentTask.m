@@ -27,10 +27,6 @@ classdef NoniusAdjustmentTask < Task
         nAdj = 1;  % number of adjustments tasks in each adjustment subsession
     end
     
-    properties
-        Result
-    end
-    
     methods
         function [success, result] = runOnce(self)
             % History (oldest at top):
