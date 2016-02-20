@@ -188,10 +188,13 @@ function [ ] = DefaultParameters(HW)
     % sounds for right and wrong answers (may be the same sound)
     HW.requestPTBLowAudioLatency = true;
     HW.rightSound = importdata('media/Windows Balloon (Quirky) 3.wav');
-    HW.wrongSound = ...
-        importdata('media/Windows Critical Stop (Quirky) 2.wav');
+%     HW.wrongSound = ...
+%         importdata('media/Windows Critical Stop (Quirky) 2.wav');
+    HW.wrongSound.data = 0.5 .* MakeBeep(200, 0.20)';
+    HW.wrongSound.fs = Snd('DefaultRate');
     % sound for bad response, ex. hit an invalid key
-    HW.failSound = importdata('media/Windows Hardware Fail.wav');
+    %HW.failSound = importdata('media/Windows Hardware Fail.wav');
+    HW.failSound = HW.wrongSound;
     
     % Store random number generator
     HW.randSeed = now()*24*60;
