@@ -15,11 +15,11 @@ classdef NoniusAdjustmentTask < Task
         leftLuminance = 0.45;
         rightLuminance = 1.00;
         
-        mouseMovementMult = 0.5; % How much lines should move per pixel of mouse movement
+        mouseMovementMult = 0.05; % How much lines should move per pixel of mouse movement
         
         %DrawFusionLock parameters:
-        %lockWidthDeg
-        %lockSquares
+        lockWidthDeg = 8.0; % full width of the lock box
+        lockSquares = 16;
     end
     
     properties
@@ -54,7 +54,7 @@ classdef NoniusAdjustmentTask < Task
             respTime = zeros(1,self.nAdj*2);
 
             center = 0.5 .* (HW.screenRect([3 4]) - HW.screenRect([1 2]));
-%             lockWidthPx = self.lockWidthDeg * HW.ppd;
+            lockWidthPx = self.lockWidthDeg * HW.ppd;
 
             monWidthPx = HW.screenRect(3) - HW.screenRect(1);
             pixelsPerCM = monWidthPx/HW.monWidth;
@@ -149,7 +149,7 @@ classdef NoniusAdjustmentTask < Task
                         Screen('FrameRect',HW.winPtr, rightLumRaw, RectPositions, RectPens);
                         Screen('DrawLines',HW.winPtr, LinePositionsR, self.innerFuseTargetThickness, rightLumRaw, [], 1);
 
-                        %HW = DrawFusionLock(HW, center, 0.5*lockWidthPx, self.lockSquares);
+                        DrawFusionLock(center, 0.5*lockWidthPx, self.lockSquares);
                         HW.ScreenCustomStereo('Flip', HW.winPtr);
                         
                         % parse inputs

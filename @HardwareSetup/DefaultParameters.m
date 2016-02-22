@@ -190,7 +190,7 @@ function [ ] = DefaultParameters(HW)
     HW.rightSound = importdata('media/Windows Balloon (Quirky) 3.wav');
 %     HW.wrongSound = ...
 %         importdata('media/Windows Critical Stop (Quirky) 2.wav');
-    HW.wrongSound.data = 0.5 .* MakeBeep(200, 0.20)';
+    HW.wrongSound.data = 0.1*MakeBeep(330,0.20)';
     HW.wrongSound.fs = Snd('DefaultRate');
     % sound for bad response, ex. hit an invalid key
     %HW.failSound = importdata('media/Windows Hardware Fail.wav');

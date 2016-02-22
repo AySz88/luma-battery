@@ -39,7 +39,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         %  markOffsetPx : Offset of height of mark (for bracketing)
         bgLum = 0.5;
         displayContrast = [0.5 0.5];
-        widthDeg = 0.25;
+        widthDeg = 2.0;
         heightDeg = 6.0;
         bands = 16; % # of bands, use [] for no banding
         phases = (2*pi/6 * [0.5 -0.5]) + pi;
@@ -50,7 +50,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
         markHeightPx = 5;
         markOffsetPx = 0;
         
-        mouseValPerPx = 0.05; % Change in value per pixel vertical mouse movement
+        mouseValPerPx = 1.0/250.0; % Change in value per pixel vertical mouse movement
     end
     
     % === Flatfile handling functions ===
@@ -164,7 +164,7 @@ classdef RectSinusoidStimulus < AdjustmentStimulus
                 Screen('FillRect', HW.winPtr, 0, markRects(1,:));
                 Screen('FillRect', HW.winPtr, 0, markRects(2,:));
                 
-                %DrawFusionLock(HW, center, 0.5*lockWidthPx, self.lockSquares);
+                DrawFusionLock(center, 0.5*lockWidthPx, self.lockSquares);
             end
             
             HW.ScreenCustomStereo('Flip', HW.winPtr);
