@@ -1,4 +1,4 @@
- % Runs an experiment testing stereo acuity and fixation disparity
+% Runs an experiment testing stereo acuity and fixation disparity
 
 %% Ensure everything is OK with MATLAB, PTB, git, etc.
 tempDiaryName = tempname();
